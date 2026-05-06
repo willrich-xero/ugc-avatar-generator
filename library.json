@@ -1,0 +1,394 @@
+{
+  "avatars": [
+    {
+      "name": "Amara Okafor",
+      "avatarUrl": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/5dd7db8b-2eca-4861-b890-20a9684da1d8_2VHJub4a0.png",
+      "meta": {
+        "age": "Mid thirties",
+        "gender": "Woman",
+        "ethnicity": "South Asian",
+        "hair": "Shoulder length black",
+        "clothing": "Rust red knit sweater"
+      },
+      "characterSheet": {
+        "fullBodyFront": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/756a7eb3-29da-4727-b419-14a8f9b43960_FISHK8sgO.png",
+        "fullBodySide": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/86c28f56-3988-466f-8362-69f1d4d602ff_FxHjrpPKO.png",
+        "expressions": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/8e83dd5a-d79e-4878-9a6a-99d044e4a796_a97TSRn53.png"
+      },
+      "environments": [
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/40ee16b3-8f74-4d21-8712-8d3d436e7632_vB_ilzk0G.png",
+          "name": "WFH Office — Medium dedicated room",
+          "meta": "White / IKEA style · Window + desk lamp · Lived-in",
+          "createdAt": "2026-05-06T05:22:43.992Z",
+          "shots": [
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/0de10b19-4642-4705-b8ec-aec84aadf726_O5oHbvjwp.png",
+              "label": "Shot 1",
+              "createdAt": "2026-05-06T05:26:51.737Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/a81f323e-33eb-49a5-828b-a3297ac888c5_xKamCsVeZ.png",
+              "label": "Shot 2",
+              "createdAt": "2026-05-06T05:26:51.737Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/81a5fa9e-6c55-4e2a-af84-65f15e309d79_V1zAOMcLa.png",
+              "label": "Shot 4",
+              "createdAt": "2026-05-06T05:26:51.737Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/12a8c3ef-4453-4b18-9f9c-19dedba8eb56_mXTMdF2Hq.png",
+              "label": "Shot 5",
+              "createdAt": "2026-05-06T05:26:51.737Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/b51321a1-09f5-46d5-afc1-8b11ed217c94_2VYJNWdwqZ.png",
+              "label": "Shot 7",
+              "createdAt": "2026-05-06T05:26:51.737Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/01451fcd-6b3d-4f98-be56-8c4f629002e2_KgyRk3a9v.png",
+              "label": "Shot 9",
+              "createdAt": "2026-05-06T05:26:51.737Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/8fcbe43d-c508-4886-ae3f-c24935101f11_GoFK93A_d.png",
+              "label": "Shot 10",
+              "createdAt": "2026-05-06T05:26:51.737Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/4b6dc914-b774-42f7-8871-23b083aa6145_-0_Eq_I6eP.png",
+              "label": "Shot 11",
+              "createdAt": "2026-05-06T05:26:51.737Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/b046378b-6542-4764-9351-301f2fbdb2f2_ReHZqMdw7.png",
+              "label": "Shot 12",
+              "createdAt": "2026-05-06T05:26:51.737Z"
+            }
+          ]
+        }
+      ],
+      "ptcShots": [
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/35c1abff-bc49-4e44-a9c4-42473453b5bc_LvExW-X2j.png",
+          "label": "PTC Shot 2",
+          "createdAt": "2026-05-06T05:30:42.098Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/a883a76e-ebc9-4783-ac5b-eba0124b5f30_6_4cFlZKl.png",
+          "label": "PTC Shot 4",
+          "createdAt": "2026-05-06T05:30:42.098Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/cc7b0067-66ed-4f9a-ad94-a209109bc2a6_gX-2h-V_n.png",
+          "label": "PTC Shot 8",
+          "createdAt": "2026-05-06T05:30:42.098Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/a0b1913c-9e1b-4377-87b6-a4ee27a0bf16_5FWUa9CGG.png",
+          "label": "PTC Shot 9",
+          "createdAt": "2026-05-06T05:30:42.098Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/6164e25d-01d7-47fe-a05b-f9d850e61385_kieW8ECis.png",
+          "label": "PTC Shot 12",
+          "createdAt": "2026-05-06T05:30:42.098Z"
+        }
+      ],
+      "id": 1778045442111,
+      "createdAt": "2026-05-06T05:30:42.111Z"
+    },
+    {
+      "name": "Noah Hutchinson",
+      "avatarUrl": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/aa057e46-fae9-44b3-9c0e-cb21de18fd07_VMQQXf85D.png",
+      "meta": {
+        "age": "Late twenties",
+        "gender": "Man",
+        "ethnicity": "East Asian",
+        "hair": "Very short / cropped dark brown",
+        "clothing": "White fitted t-shirt"
+      },
+      "characterSheet": {
+        "fullBodyFront": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/b106bbce-7400-4207-bc3b-c36effa652f2_jDGrSH7_t.png",
+        "fullBodySide": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/54a4ce4f-4b26-48d3-af29-8752de893e1d_o2VkwFKUx.png",
+        "expressions": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/fdb44b00-6337-438e-8e73-102c58c71406_Sp8hHB8FO.png"
+      },
+      "environments": [
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/b6f13cb2-d1c9-414b-8849-c6cd397c4185_ou2zdCAwC.png",
+          "name": "WFH Office — Medium dedicated room",
+          "meta": "Timber / warm wood · Window + desk lamp · Lived-in",
+          "createdAt": "2026-05-06T04:45:17.512Z",
+          "shots": [
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/e00379db-3cce-41c3-ab57-40280e508531_1mrqdhrEX.png",
+              "label": "Shot 1",
+              "createdAt": "2026-05-06T04:50:38.673Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/b42bb647-5c18-47a2-a2d2-48605d517b0d_-HgnnZZE6.png",
+              "label": "Shot 4",
+              "createdAt": "2026-05-06T04:50:38.673Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/e916143e-16d1-44b7-9a23-a14323501e37_FSPBcH4CeS.png",
+              "label": "Shot 8",
+              "createdAt": "2026-05-06T04:50:38.673Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/b2fa616b-c47d-43d9-b1d4-a1bcd78b2508_jneeZAudn.png",
+              "label": "Shot 9",
+              "createdAt": "2026-05-06T04:50:38.673Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/60928317-b44e-476b-b777-b7000e109db4_SPmQdVBEp.png",
+              "label": "Shot 10",
+              "createdAt": "2026-05-06T04:50:38.673Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/0fd39960-945f-425d-8f3b-d864e3102c72_7EkfzpQSy.png",
+              "label": "Shot 12",
+              "createdAt": "2026-05-06T04:50:38.673Z"
+            }
+          ]
+        }
+      ],
+      "ptcShots": [
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/de9d2fda-9785-4120-a310-612de5f6655b_GiWroNO1f.png",
+          "label": "PTC Shot 1",
+          "createdAt": "2026-05-06T04:55:25.103Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/5330c287-8bff-4b87-b4dd-c6f0dc56799f_fG48Zx-Lo.png",
+          "label": "PTC Shot 4",
+          "createdAt": "2026-05-06T04:55:25.103Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/85f4d81a-fcf9-4ced-be27-4ecdb556921a_ah0J29keD.png",
+          "label": "PTC Shot 3",
+          "createdAt": "2026-05-06T04:55:25.103Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/444ae52d-1141-4fb5-b2cf-713a33584513_CFF_QKNvv.png",
+          "label": "PTC Shot 5",
+          "createdAt": "2026-05-06T04:55:25.103Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/881c038a-cb27-49c8-9de0-61cc122e250f_NeOv6ftYq.png",
+          "label": "PTC Shot 7",
+          "createdAt": "2026-05-06T04:55:25.103Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/fb825b08-2dd3-425b-891c-8fe3d0b0fff9_CViA6I8Ad.png",
+          "label": "PTC Shot 9",
+          "createdAt": "2026-05-06T04:55:25.103Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/e08a688c-76e6-42e0-8c35-d881043e8bba_w8cKBqjYB.png",
+          "label": "PTC Shot 10",
+          "createdAt": "2026-05-06T04:55:25.103Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/5dd8ec73-77dc-4adf-b768-3dd9886f5680_aFxo-ZDki.png",
+          "label": "PTC Shot 11",
+          "createdAt": "2026-05-06T04:55:25.103Z"
+        }
+      ],
+      "id": 1778043325119,
+      "createdAt": "2026-05-06T04:55:25.119Z"
+    },
+    {
+      "name": "Susan Flemington",
+      "avatarUrl": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/a87cdec6-38ec-4661-b693-ba3d6357ebf9_FLd48veEe.png",
+      "meta": {
+        "age": "Late thirties",
+        "gender": "Woman",
+        "ethnicity": "Middle Eastern",
+        "hair": "Long black",
+        "clothing": "Vintage band tee, faded and worn"
+      },
+      "characterSheet": {
+        "fullBodyFront": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/fef78c55-b657-4bcb-951c-fd98458c3325_Eid5E4RTB.png",
+        "fullBodySide": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/a0cf579f-9286-4d5c-b4c8-d0ed1e12cdf8_k4lCh1AbX.png",
+        "expressions": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/6d21c805-4b56-4c38-854e-969ae209f7d7_6bo9GpcUC.png"
+      },
+      "environments": [
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/3a0761e4-664d-4379-926d-f208ccb11b31_gqPocFH_-.png",
+          "name": "WFH Office — Medium dedicated room",
+          "meta": "White / IKEA style · Window light only · Lived-in",
+          "createdAt": "2026-05-06T02:04:38.117Z",
+          "shots": [
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/60c7944a-a018-4097-86dc-8fb75eaf6d21_FBQq2cBox.png",
+              "label": "Shot 1",
+              "createdAt": "2026-05-06T02:10:07.346Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/d81ec282-bda1-4950-b4b4-d7b809c39101_NtxUbfU5r.png",
+              "label": "Shot 3",
+              "createdAt": "2026-05-06T02:10:07.346Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/2e236a78-32fa-4b77-bfc3-ee5fffb60896_l5p6tyEl7.png",
+              "label": "Shot 4",
+              "createdAt": "2026-05-06T02:10:07.346Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/b296dfe8-cf35-4f1a-9faf-b80b07d8ee10_z_C1_jtbm.png",
+              "label": "Shot 8",
+              "createdAt": "2026-05-06T02:10:07.346Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/fc722a93-df95-48e5-9ef7-9ff39ba62506_7hJuKJRio.png",
+              "label": "Shot 10",
+              "createdAt": "2026-05-06T02:10:07.346Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/8b5efe53-8701-400e-acab-56229af7b1bf_0ASAWBDqN.png",
+              "label": "Shot 11",
+              "createdAt": "2026-05-06T02:10:07.346Z"
+            }
+          ]
+        }
+      ],
+      "ptcShots": [
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/c3b4e3c5-1f8e-4930-bfb9-3384a9686d07_K5cUIdiem.png",
+          "label": "PTC Shot 1",
+          "createdAt": "2026-05-06T02:15:30.244Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/223831b8-ddb7-4264-81ea-daeb2db82caf_qAld0A-Rg.png",
+          "label": "PTC Shot 3",
+          "createdAt": "2026-05-06T02:15:30.244Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/467af5c1-b4a0-4618-ac1d-92cc82ed0424_tkHlZTEW1.png",
+          "label": "PTC Shot 4",
+          "createdAt": "2026-05-06T02:15:30.244Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/6cd3acfc-8dcd-4066-a201-a4fbacad6c80_9aLRzp1MB.png",
+          "label": "PTC Shot 5",
+          "createdAt": "2026-05-06T02:15:30.244Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/d4258695-5d69-44dc-95e8-566a70791226_z4itWkRQO.png",
+          "label": "PTC Shot 7",
+          "createdAt": "2026-05-06T02:15:30.244Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/c5c3e3a4-a851-4bc4-9551-ccdbd81abe95_BSs7fjhZ6.png",
+          "label": "PTC Shot 8",
+          "createdAt": "2026-05-06T02:15:30.244Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/5554d507-febd-472a-aa9e-5119ee5aecb9_46Zi7tGHW.png",
+          "label": "PTC Shot 9",
+          "createdAt": "2026-05-06T02:15:30.244Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/249793fc-8b81-4729-af27-c2664c25fece_hd8zF6cwR.png",
+          "label": "PTC Shot 11",
+          "createdAt": "2026-05-06T02:15:30.244Z"
+        }
+      ],
+      "id": 1778033730259,
+      "createdAt": "2026-05-06T02:15:30.259Z"
+    },
+    {
+      "name": "Morgan Tanaka",
+      "avatarUrl": "https://media.flora.ai/node-inputs/2026/5/4/refactor-me-soon/5c804d3c-0009-4434-b39a-49dff5e7bd98_emT7-l_ty.png",
+      "meta": {
+        "age": "Early forties",
+        "gender": "Man",
+        "ethnicity": "East Asian",
+        "hair": "Chin length dark brown",
+        "clothing": "Black v-neck tee"
+      },
+      "characterSheet": {
+        "fullBodyFront": "https://media.flora.ai/node-inputs/2026/5/4/refactor-me-soon/7964aab8-f3df-4af2-8ef2-eace54e60e2e_6Y4Ga8HHn.png",
+        "fullBodySide": "https://media.flora.ai/node-inputs/2026/5/4/refactor-me-soon/06a12843-6961-4dc1-9fcc-a0a8cc91e9aa_x0RSRex9a.png",
+        "expressions": "https://media.flora.ai/node-inputs/2026/5/4/refactor-me-soon/69aeb32b-faa4-4a70-b103-a730b812dee9_1rZdUud8u.png"
+      },
+      "environments": [
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/4/refactor-me-soon/60631cc1-b17e-4ecf-90af-8dda617b41ca_qjv9f68GC0.png",
+          "name": "WFH Office — Medium dedicated room",
+          "meta": "Timber / warm wood · Window + desk lamp · Lived-in",
+          "createdAt": "2026-05-04T02:58:30.961Z",
+          "shots": [
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/a4d5159f-2e55-46b7-adae-d70c88d851f5_8HA1xeBSM.png",
+              "label": "Shot 1",
+              "createdAt": "2026-05-06T01:19:47.537Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/2134ea32-a465-4e47-ae28-9f30106a8844_NRUbj8rz9.png",
+              "label": "Shot 4",
+              "createdAt": "2026-05-06T01:19:47.537Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/919a897a-b41a-4a2c-afeb-578381e1d0c8_SkN9ik38C.png",
+              "label": "Shot 6",
+              "createdAt": "2026-05-06T01:19:47.537Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/02b5b5bd-a7eb-451e-bc07-56d4977c3686_s5b3djuQI.png",
+              "label": "Shot 7",
+              "createdAt": "2026-05-06T01:19:47.537Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/8520ed0d-a044-4ede-9c0a-cc4c1417eeee_p364bj7bW.png",
+              "label": "Shot 9",
+              "createdAt": "2026-05-06T01:19:47.537Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/dc1600b7-403c-45c7-9e2e-6a0f12c81b34_jQ7Cwx6vu.png",
+              "label": "Shot 10",
+              "createdAt": "2026-05-06T01:19:47.537Z"
+            },
+            {
+              "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/3999f956-1f1c-443b-93e1-7e4f4b8798c1_UP0ztH4lq.png",
+              "label": "Shot 12",
+              "createdAt": "2026-05-06T01:19:47.537Z"
+            }
+          ]
+        }
+      ],
+      "ptcShots": [
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/abcb2875-9db6-4023-b0bb-78c9af2292f2_9zkuQOvhI.png",
+          "label": "PTC 4",
+          "group": "Office",
+          "createdAt": "2026-05-06T01:45:08.285Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/9cad5773-1898-4e6a-9083-e7a7770426ac_s1uM6fsg6.png",
+          "label": "PTC 5",
+          "group": "Car",
+          "createdAt": "2026-05-06T01:45:08.285Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/760cb888-6145-47f7-ae73-78e12af29ae6_JVN27MP0n.png",
+          "label": "PTC 6",
+          "group": "Car",
+          "createdAt": "2026-05-06T01:45:08.285Z"
+        },
+        {
+          "url": "https://media.flora.ai/node-inputs/2026/5/6/refactor-me-soon/55605675-ec88-4df4-9e53-cf0a4fafe67b_fsaU3BAoC.png",
+          "label": "PTC 7",
+          "group": "Car",
+          "createdAt": "2026-05-06T01:45:08.285Z"
+        }
+      ],
+      "id": 1778031908297,
+      "createdAt": "2026-05-06T01:45:08.297Z"
+    }
+  ],
+  "environments": []
+}
