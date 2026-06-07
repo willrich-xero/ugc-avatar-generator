@@ -107,7 +107,7 @@ export default async function handler(req, res) {
     }
 
     const run = await runRes.json()
-    return res.status(200).json({ runId: run.runId })
+    return res.status(200).json({ runId: run.run_id })
   } catch (err) {
     console.error('Generate error:', err)
     return res.status(500).json({ error: 'Failed to start generation run' })
