@@ -3,9 +3,10 @@ import Head from 'next/head'
 import Link from 'next/link'
 
 // ─── Prompt builder ───────────────────────────────────────────────────────────
-function buildPrompt(fields, features, accessories, customHairColour = '', customClothing = '') {
+function buildPrompt(fields, features, accessories, customHairColour = '', customClothing = '', customEthnicity = '') {
+  const resolvedEthnicity = fields.ethnicity === 'Other...' ? customEthnicity : fields.ethnicity
   const charParts = [
-    `${fields.age}, ${fields.gender}, ${fields.ethnicity} appearance`,
+    `${fields.age}, ${fields.gender}, ${resolvedEthnicity} appearance`,
     `${fields.hairLength} ${(fields.hairColour === 'Custom...' ? customHairColour : fields.hairColour).toLowerCase()} hair${fields.hairTexture ? ` — ${fields.hairTexture.toLowerCase()}` : ''}`,
     fields.eyes ? `${fields.eyes.toLowerCase()} eyes` : null,
 features.length ? features.join(', ') : null,
@@ -53,7 +54,7 @@ function randomName() {
 // ─── Options ─────────────────────────────────────────────────────────────────
 const AGES = ['Early twenties','Mid twenties','Late twenties','Early thirties','Mid thirties','Late thirties','Early forties','Mid forties','Late forties','Early fifties','Mid fifties','Early sixties','Late sixties']
 const GENDERS = ['Woman','Man','Non-binary person']
-const ETHNICITIES = ['White European','Black British','Black American','South Asian','East Asian','Latin American','Middle Eastern','Mixed heritage','Indigenous Australian','Pacific Islander']
+const ETHNICITIES = ['White European','Black British','Black American','South Asian','East Asian','Latin American','Middle Eastern','Mixed heritage','Indigenous Australian','Pacific Islander','Other...']
 const HAIR_LENGTHS = ['Shaved','Very short / cropped','Short','Chin length','Shoulder length','Long','Natural / afro','Locs','Braids']
 const HAIR_COLOURS = ['Black','Dark brown','Medium brown','Light brown','Dirty blonde','Blonde','Platinum blonde with dark roots','Auburn / red','Grey / silver','White','Highlights','Vivid colour','Custom...']
 const RANDOM_HAIR_COLOURS = ['Hot pink with dark roots','Pastel lavender, faded','Electric blue, vivid','Bright copper red','Emerald green tips','Two-tone: black and platinum blonde','Bubblegum pink, grown out','Deep violet with highlights','Strawberry blonde','Bleached white with yellow tones','Neon orange','Teal with dark underlayer']
@@ -219,6 +220,7 @@ export default function CreateAvatar() {
   const [promptOpen, setPromptOpen] = useState(false)
   const [customHairColour, setCustomHairColour] = useState('')
   const [customClothing, setCustomClothing] = useState('')
+  const [customEthnicity, setCustomEthnicity] = useState('')
   const [clothingMode, setClothingMode] = useState('standard') // 'standard' | 'vertical'
   const [selectedVertical, setSelectedVertical] = useState('Construction')
 
@@ -253,7 +255,7 @@ export default function CreateAvatar() {
     setAccessories([...randomEarrings, ...randomNecklace, ...randomGlasses])
   }
 
-  const prompt = buildPrompt(fields, features, accessories, customHairColour, customClothing)
+  const prompt = buildPrompt(fields, features, accessories, customHairColour, customClothing, customEthnicity)
 
   async function startGeneration() {
     setGenStatus('running')
@@ -320,7 +322,7 @@ export default function CreateAvatar() {
           meta: {
             age: fields.age,
             gender: fields.gender,
-            ethnicity: fields.ethnicity,
+            ethnicity: fields.ethnicity === 'Other...' ? customEthnicity : fields.ethnicity,
             hair: `${fields.hairLength} ${(fields.hairColour === 'Custom...' ? customHairColour : fields.hairColour).toLowerCase()}`,
             clothing: fields.clothing === 'Custom...' ? customClothing : fields.clothing,
           },
@@ -370,20 +372,21 @@ export default function CreateAvatar() {
             </select>
 
             <span style={S.sectionLabel}>Ethnicity</span>
-            <ToggleGroup options={ETHNICITIES} selected={ETHNICITIES.includes(fields.ethnicity) ? fields.ethnicity : null} onToggle={v => setSingle('ethnicity', v)} />
-            <input
-              type="text"
-              placeholder="Other — type a custom ethnicity"
-              value={ETHNICITIES.includes(fields.ethnicity) ? '' : fields.ethnicity}
-              onChange={e => setSingle('ethnicity', e.target.value)}
-              style={{
-                width: '100%', boxSizing: 'border-box', marginTop: 6,
-                padding: '6px 12px', fontSize: 13, borderRadius: 6,
-                border: !ETHNICITIES.includes(fields.ethnicity) && fields.ethnicity ? '1px solid #13B5EA' : '1px solid #E2E8F0',
-                background: !ETHNICITIES.includes(fields.ethnicity) && fields.ethnicity ? '#E8F6FD' : '#fff',
-                color: '#4A5568', outline: 'none',
-              }}
-            />
+            <ToggleGroup options={ETHNICITIES} selected={fields.ethnicity} onToggle={v => setSingle('ethnicity', v)} />
+            {fields.ethnicity === 'Other...' && (
+              <input
+                type="text"
+                placeholder="Type a custom ethnicity"
+                value={customEthnicity}
+                onChange={e => setCustomEthnicity(e.target.value)}
+                style={{
+                  width: '100%', boxSizing: 'border-box', marginTop: 6,
+                  padding: '6px 12px', fontSize: 13, borderRadius: 6,
+                  border: '1px solid #13B5EA', background: '#E8F6FD',
+                  color: '#4A5568', outline: 'none',
+                }}
+              />
+            )}
 
             <span style={S.sectionLabel}>Hair length</span>
             <ToggleGroup options={HAIR_LENGTHS} selected={fields.hairLength} onToggle={v => setSingle('hairLength', v)} />
@@ -641,7 +644,7 @@ export default function CreateAvatar() {
                     )}
                   </div>
                   <div style={{ paddingTop: 4 }}>
-                    <div style={{ fontSize: 13, color: '#4A5568', marginBottom: 4 }}>{fields.age} · {fields.gender} · {fields.ethnicity}</div>
+                    <div style={{ fontSize: 13, color: '#4A5568', marginBottom: 4 }}>{fields.age} · {fields.gender} · {fields.ethnicity === 'Other...' ? customEthnicity || 'Other' : fields.ethnicity}</div>
                     <div style={{ fontSize: 13, color: '#4A5568', marginBottom: 4 }}>{fields.hairLength} {fields.hairColour.toLowerCase()} hair</div>
                     <div style={{ fontSize: 13, color: '#4A5568' }}>{fields.clothing}</div>
                   </div>
