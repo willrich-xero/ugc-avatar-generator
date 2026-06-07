@@ -88,7 +88,7 @@ export default async function handler(req, res) {
     }
 
     const run = await runRes.json()
-    return res.status(200).json({ runId: run.runId, techniqueSlug })
+    return res.status(200).json({ runId: run.run_id, techniqueSlug })
   } catch (err) {
     console.error('Angle generator error:', err)
     console.error('Error name:', err.name)
