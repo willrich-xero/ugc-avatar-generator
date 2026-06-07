@@ -96,8 +96,8 @@ export default async function handler(req, res) {
     }
 
     const run = await runRes.json()
-    console.log('Run started:', run.runId)
-    return res.status(200).json({ runId: run.runId, techniqueSlug })
+    console.log('Run started:', run.run_id)
+    return res.status(200).json({ runId: run.run_id, techniqueSlug })
   } catch (err) {
     console.error('PTC generator error:', err)
     console.error('Error name:', err.name)

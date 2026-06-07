@@ -130,7 +130,7 @@ export default async function handler(req, res) {
     }
 
     const run = await runRes.json()
-    return res.status(200).json({ runId: run.runId, techniqueSlug })
+    return res.status(200).json({ runId: run.run_id, techniqueSlug })
   } catch (err) {
     console.error('Character sheet error:', err)
     return res.status(500).json({ error: 'Failed to start character sheet run' })
