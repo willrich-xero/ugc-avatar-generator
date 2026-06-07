@@ -16,11 +16,9 @@ features.length ? features.join(', ') : null,
 
   return `Create a candid, authentic smartphone self-portrait photograph that feels genuinely captured in the moment — not directed, not styled, not produced.
 
-Match the lighting quality, contrast, shadow depth, and skin luminosity from the attached reference images. Do not adopt the character, hair, clothing, or environment from the reference images — use only the lighting behaviour as reference.
+Match the lighting quality, contrast and shadow depth, from the attached reference images. Do not adopt the character, hair, clothing, or environment from the reference images — use only the lighting behaviour as reference.
 
 Character: ${charParts.join('. ')}.
-
-Scene: The character is photographing themselves in their home dining room. The background includes a dining table and chairs, natural light from a nearby window, and everyday home details — perhaps shelving, artwork, or kitchen visible in the distance. The space feels warm, lived-in, and domestic rather than styled or staged.
 
 Shot: Close selfie-style framing — face and upper chest filling most of the frame, chin to just above the crown, shoulders visible at the bottom edge. No hands, arms, or phone visible in frame at any point. The crop should be tight enough that there is no room for limbs to appear. Face should sit slightly off-centre — drifted left or right of middle, with the background visible more on one side. Slight upward tilt, natural and candid. Do not centre the face symmetrically in the frame.
 
@@ -30,7 +28,7 @@ Lighting: Natural indoor window light from the side creating clear directional i
 
 Expression: Genuine, relaxed, mid-moment. Natural smile or soft open expression — approachable, confident, real.
 
-Avoid: Hands or arms in frame, phone visible, face appearing small in frame, flat even lighting, lifted shadows, overexposed face, cool grey skin tones, editorial styling, heavy makeup, film grain, logos or text.`
+Avoid: Hands or arms in frame, phone visible, face appearing small in frame, flat even lighting, excessive shadows, lifted shadows, overexposed face, cool grey skin tones, editorial styling, heavy makeup, film grain, logos or text, overly warm colour temperature.`
 }
 
 // ─── Random name generator ────────────────────────────────────────────────────
@@ -67,6 +65,56 @@ const EARRING_OPTIONS = ['Small silver hoop earrings','Small gold hoop earrings'
 const NECKLACE_OPTIONS = ['Fine silver chain necklace','Fine gold chain necklace']
 const GLASSES_OPTIONS = ['Tortoiseshell glasses','Wire-frame glasses','Black-frame glasses','No glasses']
 const FEATURES = ['Nose stud','Light stubble','Full beard','Freckles','Natural laughter lines','Visible tattoos','Septum ring','Bold brows']
+
+
+// ─── Business vertical clothing ──────────────────────────────────────────────
+const VERTICALS = ['Construction', 'Ecommerce / Fashion', 'Hairdressing', 'Café Owner', 'Freelancer']
+
+const VERTICAL_CLOTHING = {
+  'Construction': [
+    'Hi-vis orange vest over a white fitted tee, work shorts',
+    'Hi-vis yellow vest over a navy flannel shirt, worn jeans',
+    'Hi-vis orange long-sleeve shirt, dusty work pants, steel cap boots',
+    'Hi-vis vest over a grey tee, tool belt visible at waist',
+    'Faded hi-vis shirt with sleeves rolled up, cargo shorts',
+  ],
+  'Ecommerce / Fashion': [
+    'Relaxed white linen shirt, clean minimal style',
+    'Oversized cream knit, straight leg trousers — understated and chic',
+    'Simple black turtleneck, silver jewellery',
+    'Soft floral midi dress, effortless and natural',
+    'Neutral toned co-ord set, casual but considered',
+  ],
+  'Hairdressing': [
+    'All-black uniform — fitted black top, black trousers, black apron',
+    'Sleek black tunic top, black joggers, minimal jewellery',
+    'Black fitted t-shirt with black utility apron, small scissors holster',
+    'Smart black polo with salon logo area, slim black pants',
+    'Black wrap-style top, black fitted trousers, hair clips on apron',
+  ],
+  'Café Owner': [
+    'Worn canvas apron over a plain white tee, jeans',
+    'Denim apron over a striped long sleeve shirt',
+    'Black barista apron over a black tee, small tattoos visible',
+    'Olive green apron over a cream linen shirt, sleeves rolled',
+    'Classic white café apron over a simple navy tee',
+  ],
+  'Freelancer': [
+    'Relaxed oversized hoodie in sage green, casual and comfortable',
+    'Soft grey marl sweatshirt, minimal and unfussy',
+    'Simple white tee, open linen shirt over the top, relaxed fit',
+    'Cosy cream ribbed knit, minimal jewellery',
+    'Navy crewneck sweatshirt, lived-in and comfortable',
+  ],
+}
+
+const VERTICAL_EXTRAS = {
+  'Construction': ['Sun-weathered complexion','Safety glasses pushed up on forehead','Fine dust or plaster on clothing','Calloused hands visible at collar','Slight tan line at collar','Work gloves tucked into pocket'],
+  'Ecommerce / Fashion': ['Manicured nails','Subtle statement earrings','Stylish minimal watch','Lip gloss','Hair perfectly styled'],
+  'Hairdressing': ['Scissors clipped to apron','Hair clips visible on apron or collar','Latex gloves rolled down at wrist','Slight colour stain on fingertips','Sleek professional makeup'],
+  'Café Owner': ['Slight flour or coffee on apron','Pen tucked behind ear','Tired but warm expression','Slight coffee stain on sleeve','Early morning look — beanie, minimal'],
+  'Freelancer': ['Headphones around neck','Relaxed natural makeup or no makeup','Reading glasses pushed up','Slightly dishevelled creative energy','Cosy indoor look'],
+}
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)] }
 function pickN(arr, n) { return [...arr].sort(() => 0.5 - Math.random()).slice(0, n) }
@@ -171,6 +219,8 @@ export default function CreateAvatar() {
   const [promptOpen, setPromptOpen] = useState(false)
   const [customHairColour, setCustomHairColour] = useState('')
   const [customClothing, setCustomClothing] = useState('')
+  const [clothingMode, setClothingMode] = useState('standard') // 'standard' | 'vertical'
+  const [selectedVertical, setSelectedVertical] = useState('Construction')
 
   const [genStatus, setGenStatus] = useState('idle')
   const [progress, setProgress] = useState(0)
@@ -320,7 +370,20 @@ export default function CreateAvatar() {
             </select>
 
             <span style={S.sectionLabel}>Ethnicity</span>
-            <ToggleGroup options={ETHNICITIES} selected={fields.ethnicity} onToggle={v => setSingle('ethnicity', v)} />
+            <ToggleGroup options={ETHNICITIES} selected={ETHNICITIES.includes(fields.ethnicity) ? fields.ethnicity : null} onToggle={v => setSingle('ethnicity', v)} />
+            <input
+              type="text"
+              placeholder="Other — type a custom ethnicity"
+              value={ETHNICITIES.includes(fields.ethnicity) ? '' : fields.ethnicity}
+              onChange={e => setSingle('ethnicity', e.target.value)}
+              style={{
+                width: '100%', boxSizing: 'border-box', marginTop: 6,
+                padding: '6px 12px', fontSize: 13, borderRadius: 6,
+                border: !ETHNICITIES.includes(fields.ethnicity) && fields.ethnicity ? '1px solid #13B5EA' : '1px solid #E2E8F0',
+                background: !ETHNICITIES.includes(fields.ethnicity) && fields.ethnicity ? '#E8F6FD' : '#fff',
+                color: '#4A5568', outline: 'none',
+              }}
+            />
 
             <span style={S.sectionLabel}>Hair length</span>
             <ToggleGroup options={HAIR_LENGTHS} selected={fields.hairLength} onToggle={v => setSingle('hairLength', v)} />
@@ -348,18 +411,66 @@ export default function CreateAvatar() {
             <ToggleGroup options={EYE_COLOURS} selected={fields.eyes} onToggle={v => setSingle('eyes', v)} />
 
             <span style={S.sectionLabel}>Clothing</span>
-            <ToggleGroup options={CLOTHING_OPTIONS} selected={fields.clothing} onToggle={v => setSingle('clothing', v)} />
-            {fields.clothing === 'Custom...' && (
-              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                <input
-                  style={{ ...S.input, flex: 1 }}
-                  value={customClothing}
-                  onChange={e => setCustomClothing(e.target.value)}
-                  placeholder="e.g. vintage band tee, faded and worn..."
-                />
-                <Btn onClick={() => setCustomClothing(RANDOM_CLOTHING[Math.floor(Math.random() * RANDOM_CLOTHING.length)])} style={{ fontSize: 13, flexShrink: 0 }}>
-                  ⚄ Random
-                </Btn>
+
+            {/* Mode toggle */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              {['standard', 'vertical'].map(m => (
+                <button key={m} onClick={() => setClothingMode(m)} style={{
+                  padding: '6px 14px', fontSize: 13, borderRadius: 6, cursor: 'pointer',
+                  fontFamily: 'inherit', fontWeight: clothingMode === m ? 500 : 400,
+                  background: clothingMode === m ? '#1A2B4A' : '#fff',
+                  border: clothingMode === m ? '1px solid #1A2B4A' : '1px solid #E2E8F0',
+                  color: clothingMode === m ? '#fff' : '#4A5568',
+                }}>
+                  {m === 'standard' ? 'Standard' : 'Business vertical'}
+                </button>
+              ))}
+            </div>
+
+            {clothingMode === 'standard' && (
+              <div>
+                <ToggleGroup options={CLOTHING_OPTIONS} selected={fields.clothing} onToggle={v => setSingle('clothing', v)} />
+                {fields.clothing === 'Custom...' && (
+                  <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                    <input
+                      style={{ ...S.input, flex: 1 }}
+                      value={customClothing}
+                      onChange={e => setCustomClothing(e.target.value)}
+                      placeholder="e.g. vintage band tee, faded and worn..."
+                    />
+                    <Btn onClick={() => setCustomClothing(RANDOM_CLOTHING[Math.floor(Math.random() * RANDOM_CLOTHING.length)])} style={{ fontSize: 13, flexShrink: 0 }}>
+                      ⚄ Random
+                    </Btn>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {clothingMode === 'vertical' && (
+              <div>
+                {/* Vertical selector */}
+                <ToggleGroup options={VERTICALS} selected={selectedVertical} multi={false} onToggle={v => {
+                  setSelectedVertical(v)
+                  const options = VERTICAL_CLOTHING[v]
+                  setCustomClothing(options[Math.floor(Math.random() * options.length)])
+                  setSingle('clothing', 'Custom...')
+                }} />
+                {/* Description textbox */}
+                <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                  <input
+                    style={{ ...S.input, flex: 1 }}
+                    value={customClothing}
+                    onChange={e => setCustomClothing(e.target.value)}
+                    placeholder="Select a vertical above to populate..."
+                  />
+                  <Btn onClick={() => {
+                    const options = VERTICAL_CLOTHING[selectedVertical]
+                    setCustomClothing(options[Math.floor(Math.random() * options.length)])
+                    setSingle('clothing', 'Custom...')
+                  }} style={{ fontSize: 13, flexShrink: 0 }}>
+                    ⚄ Random
+                  </Btn>
+                </div>
               </div>
             )}
 
@@ -397,6 +508,25 @@ export default function CreateAvatar() {
             <ToggleGroup options={FEATURES} selected={features} multi={true} onToggle={v => toggleMulti(features, setFeatures, v)} />
 
             <span style={S.sectionLabel}>Extras <span style={{ fontSize: 11, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>— optional, anything additional to add</span></span>
+            {clothingMode === 'vertical' && VERTICAL_EXTRAS[selectedVertical] && (
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 12, color: '#4A5568', marginBottom: 6 }}>Suggestions for {selectedVertical} <span style={{ opacity: 0.6 }}>— click to add</span></div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {VERTICAL_EXTRAS[selectedVertical].map(suggestion => (
+                    <div key={suggestion} onClick={() => {
+                      const current = fields.feel.trim()
+                      setSingle('feel', current ? `${current}, ${suggestion.toLowerCase()}` : suggestion.toLowerCase())
+                    }} style={{
+                      padding: '5px 10px', fontSize: 12, borderRadius: 6, cursor: 'pointer',
+                      border: '1px solid #E2E8F0', background: '#F7F9FC', color: '#4A5568',
+                      userSelect: 'none', transition: 'all 0.1s',
+                    }}>
+                      + {suggestion}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <textarea style={S.textarea} value={fields.feel} onChange={e => setSingle('feel', e.target.value)} placeholder="e.g. full sleeve tattoo on left arm, prominent scar on chin, septum piercing..." />
 
             <div style={{ marginTop: 20, marginBottom: 4 }}>
