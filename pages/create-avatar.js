@@ -17,15 +17,15 @@ features.length ? features.join(', ') : null,
 
   return `Create a candid, authentic smartphone self-portrait photograph that feels genuinely captured in the moment — not directed, not styled, not produced.
 
-Match the lighting quality, contrast and shadow depth, from the attached reference images. Do not adopt the character, hair, clothing, or environment from the reference images — use only the lighting behaviour as reference.
-
 Character: ${charParts.join('. ')}.
+
+Scene: The character is photographing themselves in front of a stark white backdrop.
 
 Shot: Close selfie-style framing — face and upper chest filling most of the frame, chin to just above the crown, shoulders visible at the bottom edge. No hands, arms, or phone visible in frame at any point. The crop should be tight enough that there is no room for limbs to appear. Face should sit slightly off-centre — drifted left or right of middle, with the background visible more on one side. Slight upward tilt, natural and candid. Do not centre the face symmetrically in the frame.
 
 Camera feel: Smartphone camera simulation. 28–35mm equivalent. Slight front-camera softness. Background softly out of focus but fully readable. No film grain, no format simulation.
 
-Lighting: Natural indoor window light from the side creating clear directional illumination with genuine contrast. Deep warm shadows under the chin, neck and jawline. Skin luminous and warm on the lit side. Background slightly brighter than face.
+Lighting: Natural indoor light from the side creating clear directional illumination with genuine contrast. Deep warm shadows under the chin, neck and jawline. Skin luminous and warm on the lit side. Background slightly brighter than face.
 
 Expression: Genuine, relaxed, mid-moment. Natural smile or soft open expression — approachable, confident, real.
 
