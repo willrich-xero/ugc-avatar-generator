@@ -43,7 +43,7 @@ library.json            — Local dev fallback (KV used in production)
 | Tool | Slug |
 |------|------|
 | Avatar creation | `ucg-avatar-generator-v2` (env: `FLORA_TECHNIQUE_SLUG`) |
-| Character sheet | `character-sheet-generator` (env: `FLORA_CHARACTER_SHEET_SLUG`) |
+| Character sheet | `ugc-character-sheet-generator` (env: `FLORA_CHARACTER_SHEET_SLUG`) |
 | Environment | `character-location-generator` (env: `FLORA_LOCATION_SLUG`) |
 | Shot generator | `angle-generator-final` |
 | PTC generator | `piece-to-camera-generator` |
