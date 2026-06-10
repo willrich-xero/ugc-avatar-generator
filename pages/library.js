@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 function NavBar() {
   return (
@@ -31,6 +31,14 @@ export default function Library() {
   const [deleting, setDeleting] = useState(null)
   const [enlarged, setEnlarged] = useState(null)
 
+  // Manual environment upload state: avatarId being uploaded, or null
+  const [uploadingEnvFor, setUploadingEnvFor] = useState(null)
+  const [envFile, setEnvFile] = useState(null)
+  const [envPreview, setEnvPreview] = useState(null)
+  const [envName, setEnvName] = useState('')
+  const [envSaving, setEnvSaving] = useState(false)
+  const envInputRef = useRef(null)
+
   useEffect(() => {
     fetch('/api/library')
       .then(r => r.json())
@@ -48,6 +56,76 @@ export default function Library() {
     })
     setAvatars(prev => prev.filter(a => a.id !== id))
     setDeleting(null)
+  }
+
+  function openEnvUpload(avatarId) {
+    setUploadingEnvFor(avatarId)
+    setEnvFile(null)
+    setEnvPreview(null)
+    setEnvName('')
+  }
+
+  function cancelEnvUpload() {
+    setUploadingEnvFor(null)
+    setEnvFile(null)
+    setEnvPreview(null)
+    setEnvName('')
+  }
+
+  function handleEnvFile(file) {
+    setEnvFile(file)
+    // Auto-fill name from filename (strip extension)
+    if (!envName) setEnvName(file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '))
+    const reader = new FileReader()
+    reader.onload = e => setEnvPreview(e.target.result)
+    reader.readAsDataURL(file)
+  }
+
+  async function saveEnvUpload(avatarId) {
+    if (!envFile || !envName.trim()) return
+    setEnvSaving(true)
+    try {
+      // 1. Upload to ImageKit
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = e => resolve(e.target.result)
+        reader.onerror = reject
+        reader.readAsDataURL(envFile)
+      })
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageDataUrl: dataUrl, fileName: `env-${Date.now()}.jpg`, folder: '/environments' }),
+      })
+      const uploadData = await uploadRes.json()
+      if (!uploadRes.ok) throw new Error(uploadData.error || 'Upload failed')
+
+      // 2. Append to avatar's environments in library
+      const avatar = avatars.find(a => a.id === avatarId)
+      const updatedEnvironments = [
+        ...(avatar.environments ?? []),
+        { name: envName.trim(), url: uploadData.url, shots: [] },
+      ]
+      await fetch('/api/library', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'avatars', entry: { ...avatar, environments: updatedEnvironments } }),
+      })
+      // Delete old entry (library uses unshift pattern)
+      await fetch('/api/library', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'avatars', id: avatarId }),
+      })
+
+      // 3. Update local state
+      setAvatars(prev => prev.map(a => a.id === avatarId ? { ...a, environments: updatedEnvironments } : a))
+      cancelEnvUpload()
+    } catch (err) {
+      alert('Upload failed: ' + err.message)
+    } finally {
+      setEnvSaving(false)
+    }
   }
 
   return (
@@ -158,6 +236,53 @@ export default function Library() {
                     </Link>
                   )}
 
+                  {/* No environments yet */}
+                  {!avatar.environments?.length && uploadingEnvFor !== avatar.id && (
+                    <div style={{ marginTop: 10, display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <Link href={`/environment?avatarId=${avatar.id}`} style={{ fontSize: 12, color: '#13B5EA', textDecoration: 'none' }}>
+                        + Generate environment
+                      </Link>
+                      <span style={{ fontSize: 12, color: '#CBD5E0' }}>·</span>
+                      <button onClick={() => openEnvUpload(avatar.id)}
+                        style={{ fontSize: 12, color: '#13B5EA', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                        + Upload environment manually
+                      </button>
+                    </div>
+                  )}
+                  {!avatar.environments?.length && uploadingEnvFor === avatar.id && (
+                    <div style={{ marginTop: 10 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#9AA5B4', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Environments</div>
+                      <div style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: 12, background: '#F7F9FC', maxWidth: 280 }}>
+                        <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 8, color: '#1A2B4A' }}>Upload environment image</div>
+                        {envPreview ? (
+                          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
+                            <img src={envPreview} style={{ width: 64, height: 44, objectFit: 'cover', borderRadius: 4, border: '1px solid #E2E8F0', flexShrink: 0 }} />
+                            <button onClick={() => { setEnvFile(null); setEnvPreview(null) }}
+                              style={{ fontSize: 11, color: '#9AA5B4', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>✕ Remove</button>
+                          </div>
+                        ) : (
+                          <div onClick={() => envInputRef.current?.click()}
+                            style={{ border: '1.5px dashed #E2E8F0', borderRadius: 6, padding: '14px 10px', textAlign: 'center', cursor: 'pointer', marginBottom: 8, background: '#fff' }}>
+                            <div style={{ fontSize: 20, color: '#CBD5E0', marginBottom: 4 }}>↑</div>
+                            <div style={{ fontSize: 12, color: '#4A5568' }}>Click to choose image</div>
+                          </div>
+                        )}
+                        <input type="text" placeholder="Environment name" value={envName} onChange={e => setEnvName(e.target.value)}
+                          style={{ width: '100%', padding: '6px 10px', fontSize: 12, borderRadius: 5, border: '1px solid #E2E8F0', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }} />
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={() => saveEnvUpload(avatar.id)} disabled={!envFile || !envName.trim() || envSaving}
+                            style={{ flex: 1, padding: '6px 0', fontSize: 12, borderRadius: 5, cursor: (!envFile || !envName.trim() || envSaving) ? 'not-allowed' : 'pointer', background: '#13B5EA', color: '#fff', border: '1px solid #13B5EA', fontFamily: 'inherit', opacity: (!envFile || !envName.trim()) ? 0.4 : 1 }}>
+                            {envSaving ? 'Saving...' : 'Save'}
+                          </button>
+                          <button onClick={cancelEnvUpload}
+                            style={{ padding: '6px 10px', fontSize: 12, borderRadius: 5, cursor: 'pointer', background: '#fff', color: '#4A5568', border: '1px solid #E2E8F0', fontFamily: 'inherit' }}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* PTC Shots */}
                   {avatar.ptcShots?.length > 0 && (
                     <div style={{ marginTop: 12 }}>
@@ -178,13 +303,12 @@ export default function Library() {
                   )}
 
                   {/* Environments */}
-                  {avatar.environments?.length > 0 && (
+                  {(avatar.environments?.length > 0 || uploadingEnvFor === avatar.id) && (
                     <div style={{ marginTop: 12 }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: '#9AA5B4', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Environments</div>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {avatar.environments.map((env, i) => (
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                        {(avatar.environments ?? []).map((env, i) => (
                           <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            {/* Environment thumbnail */}
                             <div
                               onClick={() => env.url && setEnlarged(env.url)}
                               style={{ width: 80, height: 54, borderRadius: 6, overflow: 'hidden', border: '2px solid #E2E8F0', background: '#F7F9FC', cursor: env.url ? 'zoom-in' : 'default' }}
@@ -192,28 +316,66 @@ export default function Library() {
                               {env.url && <img src={env.url} alt={env.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                             </div>
                             <div style={{ fontSize: 10, color: '#9AA5B4', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{env.name}</div>
-                            {/* Shots nested under this environment */}
                             {env.shots?.length > 0 && (
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
                                 {env.shots.map((shot, j) => (
-                                  <div
-                                    key={j}
-                                    onClick={() => shot.url && setEnlarged(shot.url)}
-                                    style={{ width: 36, height: 48, borderRadius: 4, overflow: 'hidden', border: '1px solid #E2E8F0', background: '#F7F9FC', cursor: shot.url ? 'zoom-in' : 'default' }}
-                                  >
+                                  <div key={j} onClick={() => shot.url && setEnlarged(shot.url)}
+                                    style={{ width: 36, height: 48, borderRadius: 4, overflow: 'hidden', border: '1px solid #E2E8F0', background: '#F7F9FC', cursor: shot.url ? 'zoom-in' : 'default' }}>
                                     {shot.url && <img src={shot.url} alt={shot.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                                   </div>
                                 ))}
+                                <div style={{ fontSize: 10, color: '#9AA5B4' }}>{env.shots.length} shot{env.shots.length !== 1 ? 's' : ''}</div>
                               </div>
-                            )}
-                            {env.shots?.length > 0 && (
-                              <div style={{ fontSize: 10, color: '#9AA5B4' }}>{env.shots.length} shot{env.shots.length !== 1 ? 's' : ''}</div>
                             )}
                           </div>
                         ))}
-                        <div style={{ display: 'flex', alignItems: 'flex-start', paddingTop: 4 }}>
-                          <Link href={`/environment?avatarId=${avatar.id}`} style={{ fontSize: 11, color: '#13B5EA', textDecoration: 'none' }}>+ Add environment</Link>
-                        </div>
+
+                        {/* Inline upload panel */}
+                        {uploadingEnvFor === avatar.id ? (
+                          <div style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: 12, background: '#F7F9FC', minWidth: 220, maxWidth: 280 }}>
+                            <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 8, color: '#1A2B4A' }}>Upload environment image</div>
+                            {envPreview ? (
+                              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
+                                <img src={envPreview} style={{ width: 64, height: 44, objectFit: 'cover', borderRadius: 4, border: '1px solid #E2E8F0', flexShrink: 0 }} />
+                                <button onClick={() => { setEnvFile(null); setEnvPreview(null) }}
+                                  style={{ fontSize: 11, color: '#9AA5B4', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>✕ Remove</button>
+                              </div>
+                            ) : (
+                              <div onClick={() => envInputRef.current?.click()}
+                                style={{ border: '1.5px dashed #E2E8F0', borderRadius: 6, padding: '14px 10px', textAlign: 'center', cursor: 'pointer', marginBottom: 8, background: '#fff' }}>
+                                <div style={{ fontSize: 20, color: '#CBD5E0', marginBottom: 4 }}>↑</div>
+                                <div style={{ fontSize: 12, color: '#4A5568' }}>Click to choose image</div>
+                              </div>
+                            )}
+                            <input
+                              type="text"
+                              placeholder="Environment name"
+                              value={envName}
+                              onChange={e => setEnvName(e.target.value)}
+                              style={{ width: '100%', padding: '6px 10px', fontSize: 12, borderRadius: 5, border: '1px solid #E2E8F0', marginBottom: 8, outline: 'none', boxSizing: 'border-box' }}
+                            />
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <button
+                                onClick={() => saveEnvUpload(avatar.id)}
+                                disabled={!envFile || !envName.trim() || envSaving}
+                                style={{ flex: 1, padding: '6px 0', fontSize: 12, borderRadius: 5, cursor: (!envFile || !envName.trim() || envSaving) ? 'not-allowed' : 'pointer', background: '#13B5EA', color: '#fff', border: '1px solid #13B5EA', fontFamily: 'inherit', opacity: (!envFile || !envName.trim()) ? 0.4 : 1 }}>
+                                {envSaving ? 'Saving...' : 'Save'}
+                              </button>
+                              <button onClick={cancelEnvUpload}
+                                style={{ padding: '6px 10px', fontSize: 12, borderRadius: 5, cursor: 'pointer', background: '#fff', color: '#4A5568', border: '1px solid #E2E8F0', fontFamily: 'inherit' }}>
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 2 }}>
+                            <Link href={`/environment?avatarId=${avatar.id}`} style={{ fontSize: 11, color: '#13B5EA', textDecoration: 'none' }}>+ Generate environment</Link>
+                            <button onClick={() => openEnvUpload(avatar.id)}
+                              style={{ fontSize: 11, color: '#13B5EA', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', fontFamily: 'inherit' }}>
+                              + Upload manually
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -254,6 +416,10 @@ export default function Library() {
           </Link>
         </div>
       </div>
+
+      {/* Global hidden file input for environment uploads */}
+      <input ref={envInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+        onChange={e => { const f = e.target.files?.[0]; if (f) handleEnvFile(f); e.target.value = '' }} />
 
       {/* Lightbox */}
       {enlarged && (
