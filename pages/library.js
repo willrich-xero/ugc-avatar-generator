@@ -189,22 +189,26 @@ export default function Library() {
                     <MetaBadge label="Created" value={new Date(avatar.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} />
                   </div>
 
-                  {/* Character sheet thumbnails */}
+                  {/* Character sheet thumbnails — adaptive: v2 uses expressions+fullBodyGrid, v1 uses fullBodyFront+fullBodySide+expressions */}
                   {avatar.characterSheet && (
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 600, color: '#9AA5B4', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Character sheet</div>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        {[
-                          { key: 'fullBodyFront', label: 'Front' },
-                          { key: 'fullBodySide', label: 'Side' },
-                          { key: 'expressions', label: 'Expressions' },
-                        ].map(({ key, label }) => (
+                        {(avatar.characterSheet.fullBodyGrid != null
+                          // v2 schema: expressions grid (output 1) + full body grid (output 2)
+                          ? [
+                              { key: 'expressions', label: 'Expressions' },
+                              { key: 'fullBodyGrid', label: 'Full body' },
+                            ]
+                          // v1 schema: front + side + expressions
+                          : [
+                              { key: 'fullBodyFront', label: 'Front' },
+                              { key: 'fullBodySide', label: 'Side' },
+                              { key: 'expressions', label: 'Expressions' },
+                            ]
+                        ).map(({ key, label }) => (
                           avatar.characterSheet[key] ? (
-                            <div
-                              key={key}
-                              onClick={() => setEnlarged(avatar.characterSheet[key])}
-                              style={{ cursor: 'zoom-in' }}
-                            >
+                            <div key={key} onClick={() => setEnlarged(avatar.characterSheet[key])} style={{ cursor: 'zoom-in' }}>
                               <div style={{ width: 48, height: 60, borderRadius: 6, overflow: 'hidden', border: '1px solid #E2E8F0', background: '#F7F9FC', marginBottom: 3 }}>
                                 <img src={avatar.characterSheet[key]} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               </div>
@@ -219,13 +223,11 @@ export default function Library() {
                             </div>
                           )
                         ))}
-                        {!avatar.characterSheet?.fullBodyFront && (
-                          <div style={{ display: 'flex', alignItems: 'center', paddingLeft: 4 }}>
-                            <Link href={`/character-sheet?avatarId=${avatar.id}`} style={{ fontSize: 12, color: '#13B5EA', textDecoration: 'none' }}>
-                              Generate sheet →
-                            </Link>
-                          </div>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', paddingLeft: 4 }}>
+                          <Link href={`/character-sheet?avatarId=${avatar.id}`} style={{ fontSize: 12, color: '#13B5EA', textDecoration: 'none' }}>
+                            Regenerate →
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   )}
