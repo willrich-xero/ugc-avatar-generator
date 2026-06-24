@@ -37,6 +37,30 @@ function Tag({ label, onRemove }) {
   )
 }
 
+const APPROVAL_STATES = ['approved', 'pending', 'rejected']
+const APPROVAL_STYLE = {
+  approved: { bg: '#EAF7EF', color: '#27AE60', label: '✓ Approved' },
+  pending:  { bg: '#FEF6EC', color: '#E67E22', label: '◷ Pending' },
+  rejected: { bg: '#FDEDEC', color: '#E74C3C', label: '✕ Rejected' },
+}
+
+function ApprovalBadge({ status, onClick }) {
+  const s = APPROVAL_STYLE[status] ?? APPROVAL_STYLE.approved
+  return (
+    <span
+      onClick={e => { e.stopPropagation(); onClick() }}
+      title="Click to change status"
+      style={{
+        fontSize: 11, padding: '1px 7px', borderRadius: 4,
+        background: s.bg, color: s.color, fontWeight: 500,
+        cursor: 'pointer', userSelect: 'none',
+      }}
+    >
+      {s.label}
+    </span>
+  )
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function Library() {
@@ -50,6 +74,7 @@ export default function Library() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterGender, setFilterGender] = useState(null)
   const [filterTags, setFilterTags] = useState([])
+  const [filterStatus, setFilterStatus] = useState(null)
 
   // Tag editing
   const [editingTagsFor, setEditingTagsFor] = useState(null)
@@ -80,6 +105,7 @@ export default function Library() {
     if (searchQuery && !a.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
     if (filterGender && a.meta?.gender !== filterGender) return false
     if (filterTags.length > 0 && !filterTags.every(t => (a.tags ?? []).includes(t))) return false
+    if (filterStatus && (a.approvalStatus ?? 'approved') !== filterStatus) return false
     return true
   })
 
@@ -141,6 +167,29 @@ export default function Library() {
 
   function toggleFilterTag(tag) {
     setFilterTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+  }
+
+  async function cycleApproval(avatarId) {
+    const avatar = avatars.find(a => a.id === avatarId)
+    const current = avatar.approvalStatus ?? 'approved'
+    const next = APPROVAL_STATES[(APPROVAL_STATES.indexOf(current) + 1) % APPROVAL_STATES.length]
+    const updated = { ...avatar, approvalStatus: next }
+    await saveAvatarUpdate(updated)
+    setAvatars(prev => prev.map(a => a.id === avatarId ? updated : a))
+  }
+
+  async function removePtcShot(avatarId, index) {
+    const avatar = avatars.find(a => a.id === avatarId)
+    const updated = { ...avatar, ptcShots: avatar.ptcShots.filter((_, i) => i !== index) }
+    await saveAvatarUpdate(updated)
+    setAvatars(prev => prev.map(a => a.id === avatarId ? updated : a))
+  }
+
+  async function removeEnvironment(avatarId, index) {
+    const avatar = avatars.find(a => a.id === avatarId)
+    const updated = { ...avatar, environments: avatar.environments.filter((_, i) => i !== index) }
+    await saveAvatarUpdate(updated)
+    setAvatars(prev => prev.map(a => a.id === avatarId ? updated : a))
   }
 
   // ── Environment upload ─────────────────────────────────────────────────────
@@ -245,8 +294,20 @@ export default function Library() {
                   color: filterGender === g ? '#fff' : '#4A5568',
                 }}>{g}</button>
               ))}
-              {(searchQuery || filterGender || filterTags.length > 0) && (
-                <button onClick={() => { setSearchQuery(''); setFilterGender(null); setFilterTags([]) }} style={{
+              {APPROVAL_STATES.map(s => {
+                const st = APPROVAL_STYLE[s]
+                const active = filterStatus === s
+                return (
+                  <button key={s} onClick={() => setFilterStatus(active ? null : s)} style={{
+                    padding: '7px 12px', fontSize: 12, borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500,
+                    background: active ? st.bg : '#fff',
+                    border: active ? `1px solid ${st.color}` : '1px solid #E2E8F0',
+                    color: active ? st.color : '#4A5568',
+                  }}>{st.label}</button>
+                )
+              })}
+              {(searchQuery || filterGender || filterTags.length > 0 || filterStatus) && (
+                <button onClick={() => { setSearchQuery(''); setFilterGender(null); setFilterTags([]); setFilterStatus(null) }} style={{
                   padding: '7px 12px', fontSize: 13, borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit',
                   background: '#fff', border: '1px solid #E2E8F0', color: '#9AA5B4',
                 }}>Clear</button>
@@ -312,7 +373,7 @@ export default function Library() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 15, fontWeight: 600 }}>{avatar.name}</span>
-                        <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 4, background: '#EAF7EF', color: '#27AE60', fontWeight: 500 }}>✓ Approved</span>
+                        <ApprovalBadge status={avatar.approvalStatus ?? 'approved'} onClick={() => cycleApproval(avatar.id)} />
                         {/* Tags inline */}
                         {(avatar.tags ?? []).map(t => <Tag key={t} label={t} />)}
                       </div>
@@ -420,9 +481,9 @@ export default function Library() {
                           <SectionLabel>PTC shots</SectionLabel>
                           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 4 }}>
                             {avatar.ptcShots.map((shot, j) => (
-                              <div key={j} onClick={() => shot.url && setEnlarged(shot.url)}
-                                style={{ width: 36, height: 48, borderRadius: 4, overflow: 'hidden', border: '1px solid #E2E8F0', background: '#F7F9FC', cursor: shot.url ? 'zoom-in' : 'default' }}>
-                                {shot.url && <img src={shot.url} alt={shot.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                              <div key={j} className="deletable-thumb" style={{ position: 'relative', width: 36, height: 48, borderRadius: 4, overflow: 'hidden', border: '1px solid #E2E8F0', background: '#F7F9FC', flexShrink: 0 }}>
+                                {shot.url && <img onClick={() => setEnlarged(shot.url)} src={shot.url} alt={shot.label} style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'zoom-in', display: 'block' }} />}
+                                <div className="thumb-delete" onClick={() => removePtcShot(avatar.id, j)} style={{ position: 'absolute', top: 2, right: 2, width: 16, height: 16, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', display: 'none', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 10, color: '#fff', lineHeight: 1 }}>×</div>
                               </div>
                             ))}
                           </div>
@@ -437,9 +498,9 @@ export default function Library() {
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
                             {(avatar.environments ?? []).map((env, i) => (
                               <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                <div onClick={() => env.url && setEnlarged(env.url)}
-                                  style={{ width: 80, height: 54, borderRadius: 6, overflow: 'hidden', border: '2px solid #E2E8F0', background: '#F7F9FC', cursor: env.url ? 'zoom-in' : 'default' }}>
-                                  {env.url && <img src={env.url} alt={env.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                                <div className="deletable-thumb" style={{ position: 'relative', width: 80, height: 54, borderRadius: 6, overflow: 'hidden', border: '2px solid #E2E8F0', background: '#F7F9FC' }}>
+                                  {env.url && <img onClick={() => setEnlarged(env.url)} src={env.url} alt={env.name} style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'zoom-in', display: 'block' }} />}
+                                  <div className="thumb-delete" onClick={() => removeEnvironment(avatar.id, i)} style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', display: 'none', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 11, color: '#fff', lineHeight: 1 }}>×</div>
                                 </div>
                                 <div style={{ fontSize: 10, color: '#9AA5B4', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{env.name}</div>
                                 {env.shots?.length > 0 && (
@@ -540,7 +601,10 @@ export default function Library() {
         </div>
       )}
 
-      <style>{`* { box-sizing: border-box }`}</style>
+      <style>{`
+        * { box-sizing: border-box }
+        .deletable-thumb:hover .thumb-delete { display: flex !important }
+      `}</style>
     </>
   )
 }
