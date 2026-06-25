@@ -358,10 +358,9 @@ export default function Environment() {
   const withCharacter = true
   const selectedAvatar = library.find(a => a.id === selectedAvatarId)
   const cs = selectedAvatar?.characterSheet
-  const libraryAvatarReady = cs && (
-    (cs.fullBodyGrid && cs.expressions) ||
-    (cs.fullBodyFront && cs.fullBodySide && cs.expressions)
-  )
+  const isV2Sheet = !!(cs?.fullBodyGrid && cs?.expressions)
+  const isV1Sheet = !!(cs?.fullBodyFront && cs?.fullBodySide && cs?.expressions) && !isV2Sheet
+  const libraryAvatarReady = isV2Sheet
   const refImagesReady = withCharacter
     ? (charPickerMode === 'library' ? !!libraryAvatarReady : refPreviews.filter(Boolean).length === 3)
     : true
@@ -381,10 +380,9 @@ export default function Environment() {
         // Images that are already URLs (from character sheet) are passed through directly.
         setProgressLabel('Uploading reference images...')
         // Use library character sheet URLs if available, otherwise use manual uploads
+        // v2 sheet: fullBodyGrid, expressions, base avatar image
         const imageSources = charPickerMode === 'library' && libraryAvatarReady
-          ? (cs.fullBodyGrid
-              ? [cs.fullBodyGrid, cs.expressions]
-              : [cs.fullBodyFront, cs.fullBodySide, cs.expressions])
+          ? [cs.fullBodyGrid, cs.expressions, selectedAvatar.avatarUrl]
           : refImages.filter(Boolean)
 
         const resolvedUrls = await Promise.all(imageSources.map(async (img, i) => {
@@ -572,7 +570,10 @@ export default function Environment() {
                               {!avatar.characterSheet && (
                                 <div style={{ fontSize: 11, color: '#E67E22', marginTop: 2 }}>⚠ No character sheet — <Link href={`/character-sheet?avatarId=${avatar.id}`} style={{ color: '#13B5EA' }}>generate one first</Link></div>
                               )}
-                              {avatar.characterSheet && (
+                              {isV1Sheet && avatar.id === selectedAvatarId && (
+                                <div style={{ fontSize: 11, color: '#E67E22', marginTop: 2 }}>⚠ Old character sheet — <Link href={`/character-sheet?avatarId=${avatar.id}`} style={{ color: '#13B5EA' }}>regenerate to use here</Link></div>
+                              )}
+                              {avatar.characterSheet?.fullBodyGrid && avatar.characterSheet?.expressions && (
                                 <div style={{ fontSize: 11, color: '#27AE60', marginTop: 2 }}>✓ Character sheet ready</div>
                               )}
                             </div>
@@ -585,7 +586,10 @@ export default function Environment() {
                         ))}
                       </div>
                     )}
-                    {selectedAvatarId && !libraryAvatarReady && (
+                    {selectedAvatarId && isV1Sheet && (
+                      <Notice warning>This avatar has an old character sheet that's no longer compatible. <Link href={`/character-sheet?avatarId=${selectedAvatarId}`} style={{ color: '#13B5EA' }}>Regenerate it →</Link></Notice>
+                    )}
+                    {selectedAvatarId && !cs && (
                       <Notice warning>This avatar doesn't have a character sheet yet. <Link href={`/character-sheet?avatarId=${selectedAvatarId}`} style={{ color: '#13B5EA' }}>Generate one →</Link></Notice>
                     )}
                   </div>
