@@ -11,7 +11,7 @@ function buildEnvDesc(f) {
   }[f.deskStyle] || 'a desk'
 
   const sizeDesc = {
-    'Compact corner': 'a compact corner setup — the desk fits snugly into a corner of the room, cosy and contained',
+    'Compact corner': '',
     'Medium dedicated room': 'a medium-sized dedicated home office room with space around the desk',
     'Large dedicated room': 'a spacious dedicated home office with room to breathe on all sides',
   }[f.roomSize] || 'a home office'
@@ -21,8 +21,8 @@ function buildEnvDesc(f) {
     'Coloured painted wall': 'a bold coloured painted wall — a rich, saturated tone like deep green, terracotta, navy, or burnt orange',
     'Bookshelves': 'bookshelves filled with books and personal objects on the wall behind',
     'Pinboard': 'a pinboard with notes, cards, and papers pinned up on the wall',
-    'Mix of shelving and artwork': 'a mix of open shelving and framed artwork on the wall',
-    'Artwork only': 'framed artwork and prints on the wall',
+    'Shelving': 'open shelving on the wall filled with books, plants, and personal objects',
+    'Artwork': 'framed artwork and prints on the wall',
   }[f.wallTreatment] || 'plain walls'
 
   const lightDesc = 'natural light from a nearby window only — no artificial lighting, soft and directional'
@@ -109,13 +109,13 @@ Avoid: Character standing rather than seated, character centred symmetrically in
 // ─── Options ─────────────────────────────────────────────────────────────────
 const TIME_OF_DAY = ['Daytime']
 const DESK_STYLES = ['Timber / warm wood', 'White / IKEA style']
-const ROOM_SIZES = ['Compact corner', 'Medium dedicated room', 'Large dedicated room']
-const WALL_TREATMENTS = ['Plain painted wall', 'Coloured painted wall', 'Bookshelves', 'Pinboard', 'Mix of shelving and artwork', 'Artwork only']
+const ROOM_SIZES = ['Medium dedicated room', 'Large dedicated room']
+const WALL_TREATMENTS = ['Plain painted wall', 'Coloured painted wall', 'Bookshelves', 'Shelving', 'Pinboard', 'Artwork']
 const LIGHTING = ['Window light only']
 const HOUSING_TYPES = ['House', 'Apartment']
 const TIDINESS = ['Very tidy', 'Lived-in']
 const TECH = ['Laptop only', 'Laptop + external monitor', 'No tech visible']
-const PERSONAL_TOUCHES = ['Houseplants', 'Framed photos', 'Books stacked on desk', 'Coffee mug', 'Sticky notes', 'Polaroids pinned up', 'Small figurines or objects', 'Stationery pot with pens', 'Headphones on desk', 'Water bottle']
+const PERSONAL_TOUCHES = ['Houseplants', 'Framed photos', 'Books stacked on desk', 'Coffee mug', 'Sticky notes', 'Polaroids pinned up', 'Small figurines or objects', 'Stationery pot with pens', 'Headphones on desk', 'Water bottle', 'Artwork']
 
 // ─── Randomise ───────────────────────────────────────────────────────────────
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)] }
@@ -126,7 +126,7 @@ const DEFAULT = {
   housingType: 'House',
   deskStyle: 'Timber / warm wood',
   roomSize: 'Medium dedicated room',
-  wallTreatment: 'Mix of shelving and artwork',
+  wallTreatment: 'Shelving',
   lighting: 'Window + desk lamp',
   tidiness: 'Lived-in',
   tech: 'Laptop only',
@@ -315,7 +315,11 @@ export default function Environment() {
   const [outputs, setOutputs] = useState([])
   const [selectedOutput, setSelectedOutput] = useState(null)
   const [enlargedOutput, setEnlargedOutput] = useState(null)
+  const [modifyNotes, setModifyNotes] = useState('')
+  const [showModifyInput, setShowModifyInput] = useState(false)
+  const [modifyStatus, setModifyStatus] = useState('idle') // idle | running | done | error
   const pollRef = useRef(null)
+  const modifyPollRef = useRef(null)
 
   const setSingle = (key, val) => setFields(f => ({ ...f, [key]: val }))
   const toggleMulti = (key, val) => setFields(f => ({
@@ -489,6 +493,47 @@ export default function Environment() {
       }
     }
     setStep(3)
+  }
+
+  async function startModify() {
+    if (selectedOutput === null || !modifyNotes.trim()) return
+    const imageUrl = outputs[selectedOutput]?.url
+    if (!imageUrl) return
+
+    setModifyStatus('running')
+    try {
+      const res = await fetch('/api/modify-environment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl, notes: modifyNotes.trim() }),
+      })
+      if (!res.ok) { setModifyStatus('error'); return }
+      const { runId } = await res.json()
+
+      modifyPollRef.current = setInterval(async () => {
+        const p = await fetch(`/api/poll?runId=${runId}&techniqueSlug=ugc-image-modifier`)
+        const pd = await p.json()
+        if (pd.status === 'complete') {
+          clearInterval(modifyPollRef.current)
+          const newUrl = pd.outputs?.[0]?.url
+          if (newUrl) {
+            setOutputs(prev => {
+              const next = [...prev]
+              next[selectedOutput] = { ...next[selectedOutput], url: newUrl }
+              return next
+            })
+          }
+          setModifyStatus('done')
+          setShowModifyInput(false)
+          setModifyNotes('')
+        } else if (pd.status === 'failed') {
+          clearInterval(modifyPollRef.current)
+          setModifyStatus('error')
+        }
+      }, 3000)
+    } catch {
+      setModifyStatus('error')
+    }
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -726,6 +771,47 @@ export default function Environment() {
               <div onClick={() => setEnlargedOutput(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, cursor: 'zoom-out' }}>
                 <img src={enlargedOutput} alt="Enlarged" style={{ maxHeight: '90vh', maxWidth: '90vw', borderRadius: 10, objectFit: 'contain', boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }} />
                 <div style={{ position: 'absolute', top: 20, right: 24, width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 18, color: 'white' }}>✕</div>
+              </div>
+            )}
+
+            {/* Modify selected image */}
+            {genStatus === 'done' && selectedOutput !== null && (
+              <div style={{ marginBottom: 16, borderRadius: 8, border: '1px solid #E2E8F0', background: '#F7F9FC', padding: 12 }}>
+                {!showModifyInput ? (
+                  <button
+                    onClick={() => { setShowModifyInput(true); setModifyStatus('idle') }}
+                    style={{ fontSize: 13, color: '#4A5568', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
+                  >
+                    ✏️ Modify selected image
+                  </button>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#4A5568' }}>Describe your changes</div>
+                    <textarea
+                      value={modifyNotes}
+                      onChange={e => setModifyNotes(e.target.value)}
+                      placeholder="e.g. Remove the plant from the desk"
+                      rows={3}
+                      style={{ width: '100%', padding: '8px 10px', fontSize: 13, border: '1px solid #E2E8F0', borderRadius: 6, fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box', background: '#fff' }}
+                    />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={startModify}
+                        disabled={!modifyNotes.trim() || modifyStatus === 'running'}
+                        style={{ padding: '7px 16px', fontSize: 13, borderRadius: 6, border: '1px solid #13B5EA', background: '#13B5EA', color: '#fff', cursor: (!modifyNotes.trim() || modifyStatus === 'running') ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: !modifyNotes.trim() ? 0.5 : 1 }}
+                      >
+                        {modifyStatus === 'running' ? 'Modifying…' : 'Apply modification'}
+                      </button>
+                      <button
+                        onClick={() => { setShowModifyInput(false); setModifyNotes(''); setModifyStatus('idle') }}
+                        style={{ padding: '7px 14px', fontSize: 13, borderRadius: 6, border: '1px solid #E2E8F0', background: '#fff', color: '#4A5568', cursor: 'pointer', fontFamily: 'inherit' }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    {modifyStatus === 'error' && <div style={{ fontSize: 12, color: '#E74C3C' }}>Modification failed — please try again.</div>}
+                  </div>
+                )}
               </div>
             )}
 
