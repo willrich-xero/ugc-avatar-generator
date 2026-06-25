@@ -26,8 +26,8 @@ export default async function handler(req, res) {
   if (!prompt) {
     return res.status(400).json({ error: 'prompt is required' })
   }
-  if (!referenceImages || referenceImages.length !== 3) {
-    return res.status(400).json({ error: '3 reference images are required' })
+  if (!referenceImages || referenceImages.length < 2) {
+    return res.status(400).json({ error: 'At least 2 reference images are required' })
   }
 
   const apiKey = process.env.FLORA_API_KEY
@@ -65,8 +65,8 @@ export default async function handler(req, res) {
     if (!textInput) {
       return res.status(500).json({ error: 'No text input found in technique schema', inputs: technique.inputs })
     }
-    if (imageInputs.length < 3) {
-      return res.status(500).json({ error: `Expected 3 image inputs, found ${imageInputs.length}`, inputs: technique.inputs })
+    if (imageInputs.length < referenceImages.length) {
+      return res.status(500).json({ error: `Technique has ${imageInputs.length} image inputs but ${referenceImages.length} images were provided`, inputs: technique.inputs })
     }
 
     // Images arrive as public URLs (uploaded by environment.js via /api/upload)
