@@ -30,15 +30,18 @@ function buildEnvDesc(f) {
   const tidyDesc = {
     'Very tidy': 'everything neatly arranged, minimal items on the desk surface, ordered and calm',
     'Lived-in': 'everyday objects naturally scattered across the desk — used but not chaotic. Only include items explicitly listed in the personal touches. Do not add books or mugs unless specified.',
-    'Busy / cluttered': 'papers, notebooks, cups, plants and objects covering most surfaces — a genuinely busy working desk',
   }[f.tidiness] || 'lived-in'
 
   const techDesc = {
     'Laptop only': 'a laptop open on the desk. The laptop screen displays a solid, flat, pure green (#00FF00) with no gradients, reflections, glow, or light spill onto the keyboard, desk, or surroundings',
     'Laptop + external monitor': 'a laptop alongside an external monitor on the desk. Both screens display a solid, flat, pure green (#00FF00) with no gradients, reflections, glow, or light spill onto any surrounding surfaces or the character',
-    'Dual monitors': 'two monitors side by side on the desk, with a keyboard and mouse on the desk surface, no laptop visible. Monitors sit directly on the desk surface — not on books, risers, or any elevated platform. Both screens display a solid, flat, pure green (#00FF00) with no gradients, reflections, glow, or light spill onto any surrounding surfaces or the character',
     'No tech visible': 'no screens or tech visible — just books and analogue objects',
   }[f.tech] || 'a laptop on the desk'
+
+  const housingDesc = {
+    'House': 'a house — the space has the feel of a standalone home, with a sense of spaciousness and permanence',
+    'Apartment': 'an apartment — the space has the feel of a flat or apartment, compact and urban, with a sense of city living',
+  }[f.housingType] || ''
 
   const touchesDesc = f.personalTouches.length
     ? `Personal touches include: ${f.personalTouches.join(', ').toLowerCase()}.`
@@ -48,11 +51,11 @@ function buildEnvDesc(f) {
     ? `\n\nAdditional details: ${f.additionalNotes.trim()}`
     : ''
 
-  return { deskDesc, sizeDesc, wallDesc, lightDesc, tidyDesc, techDesc, touchesDesc, additionalDesc }
+  return { deskDesc, sizeDesc, wallDesc, lightDesc, tidyDesc, techDesc, touchesDesc, additionalDesc, housingDesc }
 }
 
 function buildEmptyRoomPrompt(f) {
-  const { deskDesc, sizeDesc, wallDesc, lightDesc, tidyDesc, techDesc, touchesDesc, additionalDesc } = buildEnvDesc(f)
+  const { deskDesc, sizeDesc, wallDesc, lightDesc, tidyDesc, techDesc, touchesDesc, additionalDesc, housingDesc } = buildEnvDesc(f)
   const timeDesc = f.timeOfDay === 'Nighttime'
     ? 'nighttime — no natural light, room lit by warm desk lamp and ambient indoor lighting. Windows dark outside.'
     : 'daytime — natural light from a window, bright and airy'
@@ -61,7 +64,7 @@ function buildEmptyRoomPrompt(f) {
 
 Time of day: ${timeDesc}.
 
-The space is ${sizeDesc}. There is ${deskDesc} placed against the wall — not floating in the middle of the room. The desk has ${techDesc}. The walls have ${wallDesc}. The desk surface is ${tidyDesc}. The lighting is ${lightDesc}. ${touchesDesc}
+The space is ${sizeDesc}${housingDesc ? ` in ${housingDesc}` : ''}. There is ${deskDesc} placed against the wall — not floating in the middle of the room. The desk has ${techDesc}. The walls have ${wallDesc}. The desk surface is ${tidyDesc}. The lighting is ${lightDesc}. ${touchesDesc}
 
 The space feels functional and personal — a real working environment, not a corporate office or staged photo. No people in the frame.${additionalDesc}
 
@@ -73,7 +76,7 @@ Avoid: Any people or figures, DSLR sharpness, perfectly composed shot, wide dept
 }
 
 function buildWithCharacterPrompt(f) {
-  const { deskDesc, sizeDesc, wallDesc, lightDesc, tidyDesc, techDesc, touchesDesc, additionalDesc } = buildEnvDesc(f)
+  const { deskDesc, sizeDesc, wallDesc, lightDesc, tidyDesc, techDesc, touchesDesc, additionalDesc, housingDesc } = buildEnvDesc(f)
   const timeDesc = f.timeOfDay === 'Nighttime'
     ? 'nighttime — no natural light, room lit by warm desk lamp and ambient indoor lighting. Windows dark outside.'
     : 'daytime — natural light from a window, bright and airy'
@@ -86,7 +89,7 @@ function buildWithCharacterPrompt(f) {
 
 Time of day: ${timeDesc}.
 
-Environment: The space is ${sizeDesc}. There is ${deskDesc} placed against the wall — not floating in the middle of the room. The desk has ${techDesc}. The walls have ${wallDesc}. The desk surface is ${tidyDesc}. The lighting is ${lightDesc}. ${touchesDesc}
+Environment: The space is ${sizeDesc}${housingDesc ? ` in ${housingDesc}` : ''}. There is ${deskDesc} placed against the wall — not floating in the middle of the room. The desk has ${techDesc}. The walls have ${wallDesc}. The desk surface is ${tidyDesc}. The lighting is ${lightDesc}. ${touchesDesc}
 
 The space feels functional and personal — a real working environment, not a corporate office or staged photo.${additionalDesc}
 
@@ -109,8 +112,9 @@ const DESK_STYLES = ['Timber / warm wood', 'White / IKEA style']
 const ROOM_SIZES = ['Compact corner', 'Medium dedicated room', 'Large dedicated room']
 const WALL_TREATMENTS = ['Plain painted wall', 'Coloured painted wall', 'Bookshelves', 'Pinboard', 'Mix of shelving and artwork', 'Artwork only']
 const LIGHTING = ['Window light only']
-const TIDINESS = ['Very tidy', 'Lived-in', 'Busy / cluttered']
-const TECH = ['Laptop only', 'Laptop + external monitor', 'Dual monitors', 'No tech visible']
+const HOUSING_TYPES = ['House', 'Apartment']
+const TIDINESS = ['Very tidy', 'Lived-in']
+const TECH = ['Laptop only', 'Laptop + external monitor', 'No tech visible']
 const PERSONAL_TOUCHES = ['Houseplants', 'Framed photos', 'Books stacked on desk', 'Coffee mug', 'Sticky notes', 'Polaroids pinned up', 'Small figurines or objects', 'Stationery pot with pens', 'Headphones on desk', 'Water bottle']
 
 // ─── Randomise ───────────────────────────────────────────────────────────────
@@ -119,6 +123,7 @@ function pickN(arr, n) { return [...arr].sort(() => 0.5 - Math.random()).slice(0
 
 const DEFAULT = {
   timeOfDay: 'Daytime',
+  housingType: 'House',
   deskStyle: 'Timber / warm wood',
   roomSize: 'Medium dedicated room',
   wallTreatment: 'Mix of shelving and artwork',
@@ -322,6 +327,7 @@ export default function Environment() {
     setFields(prev => ({
       ...prev,
       timeOfDay: 'Daytime',
+      housingType: pick(HOUSING_TYPES),
       deskStyle: pick(DESK_STYLES),
       roomSize: pick(ROOM_SIZES),
       wallTreatment: pick(WALL_TREATMENTS),
@@ -607,6 +613,9 @@ export default function Environment() {
                 )}
               </div>
             )}
+
+            <span style={S.sectionLabel}>House type</span>
+            <ToggleGroup options={HOUSING_TYPES} selected={fields.housingType} onToggle={v => setSingle('housingType', v)} />
 
             <span style={S.sectionLabel}>Desk style</span>
             <ToggleGroup options={DESK_STYLES} selected={fields.deskStyle} onToggle={v => setSingle('deskStyle', v)} />
