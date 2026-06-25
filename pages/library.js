@@ -2,6 +2,19 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 
+// ─── Options (mirrored from create-avatar) ────────────────────────────────────
+const AGES = ['Early twenties','Mid twenties','Late twenties','Early thirties','Mid thirties','Late thirties','Early forties','Mid forties','Late forties','Early fifties','Mid fifties','Early sixties','Late sixties']
+const GENDERS = ['Woman','Man','Non-binary person']
+const ETHNICITIES = ['White European','Black British','Black American','South Asian','East Asian','Latin American','Middle Eastern','Mixed heritage','Indigenous Australian','Pacific Islander','Other...']
+const HAIR_LENGTHS = ['Shaved','Very short / cropped','Short','Chin length','Shoulder length','Long','Natural / afro','Locs','Braids']
+const HAIR_COLOURS = ['Black','Dark brown','Medium brown','Light brown','Dirty blonde','Blonde','Platinum blonde with dark roots','Auburn / red','Grey / silver','White','Highlights','Vivid colour']
+
+const FIRST_NAMES = ['Amara','Billie','Cleo','Dana','Elena','Fran','Grace','Harper','Iris','Jules','Kai','Lena','Maya','Nadia','Olive','Priya','Quinn','Rosa','Sage','Tara','Uma','Vera','Wren','Alex','Blake','Casey','Drew','Evan','Finley','Jordan','Kendall','Morgan','Noah','Parker','Reese','Sam','Taylor']
+const LAST_NAMES = ['Adeyemi','Banks','Chen','Delacroix','Ellis','Ferreira','Gomez','Hassan','Ibrahim','Jensen','Kwan','Larsson','Mwangi','Nguyen','Okafor','Patel','Reyes','Santos','Tanaka','Vargas','Walsh','Xu','Yamamoto']
+function randomName() {
+  return `${FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)]} ${LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)]}`
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function MetaBadge({ label, value }) {
@@ -42,6 +55,22 @@ const APPROVAL_STYLE = {
   approved: { bg: '#EAF7EF', color: '#27AE60', label: '✓ Approved' },
   pending:  { bg: '#FEF6EC', color: '#E67E22', label: '◷ Pending' },
   rejected: { bg: '#FDEDEC', color: '#E74C3C', label: '✕ Rejected' },
+}
+
+function ImportLabel({ children }) {
+  return <div style={{ fontSize: 12, fontWeight: 600, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>{children}</div>
+}
+
+function ImportToggleGroup({ options, selected, onSelect }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+      {options.map(o => (
+        <button key={o} onClick={() => onSelect(o)} style={{ padding: '5px 12px', fontSize: 13, borderRadius: 20, border: '1.5px solid', borderColor: selected === o ? '#13B5EA' : '#E2E8F0', background: selected === o ? '#E8F6FD' : '#fff', color: selected === o ? '#0D8CB5' : '#4A5568', cursor: 'pointer', fontFamily: 'inherit', fontWeight: selected === o ? 500 : 400 }}>
+          {o}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 function ApprovalDropdown({ status, onSelect, isOpen, onToggle }) {
@@ -117,6 +146,20 @@ export default function Library() {
   const [newTagInput, setNewTagInput] = useState('')
   const [savingTagsFor, setSavingTagsFor] = useState(null)
 
+  // Avatar importer
+  const [showImporter, setShowImporter] = useState(false)
+  const [importFile, setImportFile] = useState(null)
+  const [importPreview, setImportPreview] = useState(null)
+  const [importName, setImportName] = useState('')
+  const [importAge, setImportAge] = useState('Mid thirties')
+  const [importGender, setImportGender] = useState('Woman')
+  const [importEthnicity, setImportEthnicity] = useState('White European')
+  const [importCustomEthnicity, setImportCustomEthnicity] = useState('')
+  const [importHairLength, setImportHairLength] = useState('Short')
+  const [importHairColour, setImportHairColour] = useState('Dark brown')
+  const [importSaving, setImportSaving] = useState(false)
+  const importInputRef = useRef(null)
+
   // Manual environment upload
   const [uploadingEnvFor, setUploadingEnvFor] = useState(null)
   const [envFile, setEnvFile] = useState(null)
@@ -180,6 +223,67 @@ export default function Library() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'avatars', entry: updatedAvatar }),
     })
+  }
+
+  function resetImporter() {
+    setShowImporter(false)
+    setImportFile(null)
+    setImportPreview(null)
+    setImportName('')
+    setImportAge('Mid thirties')
+    setImportGender('Woman')
+    setImportEthnicity('White European')
+    setImportCustomEthnicity('')
+    setImportHairLength('Short')
+    setImportHairColour('Dark brown')
+  }
+
+  async function saveImportedAvatar() {
+    if (!importFile || !importName.trim()) return
+    setImportSaving(true)
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = e => resolve(e.target.result)
+        reader.onerror = reject
+        reader.readAsDataURL(importFile)
+      })
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageDataUrl: dataUrl, fileName: `avatar-import-${Date.now()}.jpg`, folder: '/avatars' }),
+      })
+      const uploadData = await uploadRes.json()
+      if (!uploadRes.ok) throw new Error(uploadData.error || 'Upload failed')
+
+      const resolvedEthnicity = importEthnicity === 'Other...' ? importCustomEthnicity : importEthnicity
+      await fetch('/api/library', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'avatars',
+          entry: {
+            name: importName.trim(),
+            avatarUrl: uploadData.url,
+            approvalStatus: 'pending',
+            characterSheet: null,
+            meta: {
+              age: importAge,
+              gender: importGender,
+              ethnicity: resolvedEthnicity,
+              hair: `${importHairLength} ${importHairColour.toLowerCase()}`,
+            },
+          },
+        }),
+      })
+      const updated = await fetch('/api/library').then(r => r.json())
+      setAvatars(updated.avatars ?? [])
+      resetImporter()
+    } catch (err) {
+      alert('Import failed: ' + err.message)
+    } finally {
+      setImportSaving(false)
+    }
   }
 
   async function addTag(avatarId, tag) {
@@ -309,6 +413,9 @@ export default function Library() {
             <Link href="/" style={{ fontSize: 13, color: '#4A5568', textDecoration: 'none', border: '1px solid #E2E8F0', padding: '6px 12px', borderRadius: 6 }}>
               ← Home
             </Link>
+            <button onClick={() => { setShowImporter(true); setImportName(randomName()) }} style={{ fontSize: 13, fontWeight: 500, padding: '6px 14px', borderRadius: 6, background: '#fff', border: '1px solid #E2E8F0', color: '#1A2B4A', cursor: 'pointer', fontFamily: 'inherit' }}>
+              ↑ Import avatar
+            </button>
             <Link href="/create-avatar" style={{ fontSize: 13, fontWeight: 500, padding: '6px 14px', borderRadius: 6, background: '#13B5EA', border: '1px solid #13B5EA', color: '#fff', textDecoration: 'none' }}>
               + New avatar
             </Link>
@@ -406,7 +513,10 @@ export default function Library() {
                     style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', cursor: 'pointer', userSelect: 'none' }}
                   >
                     {/* Thumbnail */}
-                    <div style={{ width: 40, height: 50, borderRadius: 6, overflow: 'hidden', background: '#F7F9FC', border: '1px solid #E2E8F0', flexShrink: 0 }}>
+                    <div
+                      onClick={e => { if (avatar.avatarUrl) { e.stopPropagation(); setEnlarged(avatar.avatarUrl) } }}
+                      style={{ width: 40, height: 50, borderRadius: 6, overflow: 'hidden', background: '#F7F9FC', border: '1px solid #E2E8F0', flexShrink: 0, cursor: avatar.avatarUrl ? 'zoom-in' : 'default' }}
+                    >
                       {avatar.avatarUrl && <img src={avatar.avatarUrl} alt={avatar.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                     </div>
 
@@ -461,21 +571,33 @@ export default function Library() {
                             <Tag key={tag} label={tag} onRemove={() => removeTag(avatar.id, tag)} />
                           ))}
                           {editingTagsFor === avatar.id ? (
-                            <form onSubmit={e => { e.preventDefault(); addTag(avatar.id, newTagInput).then(() => setEditingTagsFor(null)) }} style={{ display: 'flex', gap: 4 }}>
-                              <input
-                                autoFocus
-                                value={newTagInput}
-                                onChange={e => setNewTagInput(e.target.value)}
-                                placeholder="Tag name"
-                                style={{ padding: '2px 8px', fontSize: 12, borderRadius: 99, border: '1px solid #BDE3F7', outline: 'none', width: 100 }}
-                              />
-                              <button type="submit" disabled={savingTagsFor === avatar.id} style={{ padding: '2px 10px', fontSize: 12, borderRadius: 99, background: '#13B5EA', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
-                                {savingTagsFor === avatar.id ? '…' : 'Add'}
-                              </button>
-                              <button type="button" onClick={() => { setEditingTagsFor(null); setNewTagInput('') }} style={{ padding: '2px 8px', fontSize: 12, borderRadius: 99, background: '#fff', color: '#9AA5B4', border: '1px solid #E2E8F0', cursor: 'pointer', fontFamily: 'inherit' }}>
-                                Cancel
-                              </button>
-                            </form>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2 }}>
+                              {/* Existing tags from other avatars as suggestions */}
+                              {allTags.filter(t => !(avatar.tags ?? []).includes(t)).length > 0 && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                  {allTags.filter(t => !(avatar.tags ?? []).includes(t)).map(t => (
+                                    <span key={t} onClick={() => addTag(avatar.id, t).then(() => setEditingTagsFor(null))} style={{ padding: '2px 8px', borderRadius: 99, fontSize: 11, background: '#F7F9FC', color: '#4A5568', border: '1px solid #E2E8F0', cursor: 'pointer', fontWeight: 500 }}>
+                                      {t}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              <form onSubmit={e => { e.preventDefault(); addTag(avatar.id, newTagInput).then(() => setEditingTagsFor(null)) }} style={{ display: 'flex', gap: 4 }}>
+                                <input
+                                  autoFocus
+                                  value={newTagInput}
+                                  onChange={e => setNewTagInput(e.target.value)}
+                                  placeholder="New tag…"
+                                  style={{ padding: '2px 8px', fontSize: 12, borderRadius: 99, border: '1px solid #BDE3F7', outline: 'none', width: 110 }}
+                                />
+                                <button type="submit" disabled={!newTagInput.trim() || savingTagsFor === avatar.id} style={{ padding: '2px 10px', fontSize: 12, borderRadius: 99, background: '#13B5EA', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'inherit', opacity: !newTagInput.trim() ? 0.4 : 1 }}>
+                                  {savingTagsFor === avatar.id ? '…' : 'Add'}
+                                </button>
+                                <button type="button" onClick={() => { setEditingTagsFor(null); setNewTagInput('') }} style={{ padding: '2px 8px', fontSize: 12, borderRadius: 99, background: '#fff', color: '#9AA5B4', border: '1px solid #E2E8F0', cursor: 'pointer', fontFamily: 'inherit' }}>
+                                  Cancel
+                                </button>
+                              </form>
+                            </div>
                           ) : (
                             <button onClick={() => { setEditingTagsFor(avatar.id); setNewTagInput('') }} style={{ padding: '2px 8px', fontSize: 12, borderRadius: 99, background: '#fff', color: '#9AA5B4', border: '1px solid #E2E8F0', cursor: 'pointer', fontFamily: 'inherit' }}>
                               + Add tag
@@ -635,9 +757,103 @@ export default function Library() {
         )}
       </div>
 
-      {/* Global hidden file input */}
+      {/* Global hidden file inputs */}
       <input ref={envInputRef} type="file" accept="image/*" style={{ display: 'none' }}
         onChange={e => { const f = e.target.files?.[0]; if (f) handleEnvFile(f); e.target.value = '' }} />
+      <input ref={importInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+        onChange={e => { const f = e.target.files?.[0]; if (f) { setImportFile(f); const r = new FileReader(); r.onload = ev => setImportPreview(ev.target.result); r.readAsDataURL(f) }; e.target.value = '' }} />
+
+      {/* Avatar importer modal */}
+      {showImporter && (
+        <div onClick={() => resetImporter()} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 14, width: '100%', maxWidth: 540, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
+            <div style={{ padding: '20px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 17, fontWeight: 600 }}>Import avatar</div>
+              <button onClick={() => resetImporter()} style={{ background: 'none', border: 'none', fontSize: 20, color: '#9AA5B4', cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+            </div>
+            <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+              {/* Image upload */}
+              <div>
+                <ImportLabel>Avatar image</ImportLabel>
+                {importPreview ? (
+                  <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                    <img src={importPreview} style={{ width: 80, height: 100, objectFit: 'cover', borderRadius: 8, border: '1px solid #E2E8F0', flexShrink: 0 }} />
+                    <div style={{ paddingTop: 4 }}>
+                      <div style={{ fontSize: 13, color: '#4A5568', marginBottom: 8 }}>{importFile?.name}</div>
+                      <button onClick={() => { setImportFile(null); setImportPreview(null) }} style={{ fontSize: 12, color: '#9AA5B4', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>✕ Remove</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div onClick={() => importInputRef.current?.click()} style={{ border: '1.5px dashed #E2E8F0', borderRadius: 8, padding: '28px 20px', textAlign: 'center', cursor: 'pointer', background: '#F7F9FC' }}>
+                    <div style={{ fontSize: 24, color: '#CBD5E0', marginBottom: 6 }}>↑</div>
+                    <div style={{ fontSize: 13, color: '#4A5568' }}>Click to upload avatar image</div>
+                    <div style={{ fontSize: 12, color: '#9AA5B4', marginTop: 2 }}>PNG, JPG or WEBP</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Name */}
+              <div>
+                <ImportLabel>Name</ImportLabel>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input value={importName} onChange={e => setImportName(e.target.value)} placeholder="Avatar name" style={{ flex: 1, padding: '8px 12px', fontSize: 13, borderRadius: 6, border: '1px solid #E2E8F0', outline: 'none' }} />
+                  <button onClick={() => setImportName(randomName())} style={{ padding: '8px 12px', fontSize: 12, borderRadius: 6, border: '1px solid #E2E8F0', background: '#fff', color: '#4A5568', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                    ↻ Random
+                  </button>
+                </div>
+              </div>
+
+              {/* Gender */}
+              <div>
+                <ImportLabel>Gender</ImportLabel>
+                <ImportToggleGroup options={GENDERS} selected={importGender} onSelect={setImportGender} />
+              </div>
+
+              {/* Age */}
+              <div>
+                <ImportLabel>Age</ImportLabel>
+                <select value={importAge} onChange={e => setImportAge(e.target.value)} style={{ width: '100%', padding: '8px 12px', fontSize: 13, borderRadius: 6, border: '1px solid #E2E8F0', outline: 'none', background: '#fff' }}>
+                  {AGES.map(a => <option key={a}>{a}</option>)}
+                </select>
+              </div>
+
+              {/* Ethnicity */}
+              <div>
+                <ImportLabel>Ethnicity</ImportLabel>
+                <ImportToggleGroup options={ETHNICITIES} selected={importEthnicity} onSelect={setImportEthnicity} />
+                {importEthnicity === 'Other...' && (
+                  <input value={importCustomEthnicity} onChange={e => setImportCustomEthnicity(e.target.value)} placeholder="Type a custom ethnicity" style={{ width: '100%', marginTop: 6, padding: '7px 12px', fontSize: 13, borderRadius: 6, border: '1px solid #13B5EA', background: '#E8F6FD', outline: 'none', boxSizing: 'border-box' }} />
+                )}
+              </div>
+
+              {/* Hair */}
+              <div>
+                <ImportLabel>Hair length</ImportLabel>
+                <ImportToggleGroup options={HAIR_LENGTHS} selected={importHairLength} onSelect={setImportHairLength} />
+              </div>
+              <div>
+                <ImportLabel>Hair colour</ImportLabel>
+                <ImportToggleGroup options={HAIR_COLOURS} selected={importHairColour} onSelect={setImportHairColour} />
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
+                <button
+                  onClick={saveImportedAvatar}
+                  disabled={!importFile || !importName.trim() || importSaving}
+                  style={{ flex: 1, padding: '10px 0', fontSize: 14, fontWeight: 500, borderRadius: 7, border: '1px solid #13B5EA', background: '#13B5EA', color: '#fff', cursor: (!importFile || !importName.trim() || importSaving) ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: (!importFile || !importName.trim()) ? 0.5 : 1 }}
+                >
+                  {importSaving ? 'Saving…' : 'Save to library'}
+                </button>
+                <button onClick={() => resetImporter()} style={{ padding: '10px 20px', fontSize: 14, borderRadius: 7, border: '1px solid #E2E8F0', background: '#fff', color: '#4A5568', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Lightbox */}
       {enlarged && (
