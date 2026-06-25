@@ -319,6 +319,7 @@ export default function CreateAvatar() {
           name: avatarName.trim(),
           avatarUrl: output?.url ?? null,
           characterSheet: null,
+          approvalStatus: 'pending',
           meta: {
             age: fields.age,
             gender: fields.gender,

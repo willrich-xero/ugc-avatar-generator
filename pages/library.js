@@ -44,20 +44,55 @@ const APPROVAL_STYLE = {
   rejected: { bg: '#FDEDEC', color: '#E74C3C', label: '✕ Rejected' },
 }
 
-function ApprovalBadge({ status, onClick }) {
-  const s = APPROVAL_STYLE[status] ?? APPROVAL_STYLE.approved
+function ApprovalDropdown({ status, onSelect, isOpen, onToggle }) {
+  const s = APPROVAL_STYLE[status] ?? APPROVAL_STYLE.pending
   return (
-    <span
-      onClick={e => { e.stopPropagation(); onClick() }}
-      title="Click to change status"
-      style={{
-        fontSize: 11, padding: '1px 7px', borderRadius: 4,
-        background: s.bg, color: s.color, fontWeight: 500,
-        cursor: 'pointer', userSelect: 'none',
-      }}
-    >
-      {s.label}
-    </span>
+    <div style={{ position: 'relative', display: 'inline-block' }} onClick={e => e.stopPropagation()}>
+      <span
+        onClick={onToggle}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          fontSize: 11, padding: '2px 7px', borderRadius: 4,
+          background: s.bg, color: s.color, fontWeight: 500,
+          cursor: 'pointer', userSelect: 'none',
+          border: `1px solid ${s.color}22`,
+        }}
+      >
+        {s.label}
+        <svg width="8" height="5" viewBox="0 0 8 5" fill="none" style={{ opacity: 0.6 }}>
+          <path d="M1 1l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </span>
+      {isOpen && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 100,
+          background: '#fff', border: '1px solid #E2E8F0', borderRadius: 7,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.10)', minWidth: 130, overflow: 'hidden',
+        }}>
+          {APPROVAL_STATES.map(state => {
+            const st = APPROVAL_STYLE[state]
+            const active = state === status
+            return (
+              <div
+                key={state}
+                onClick={() => onSelect(state)}
+                style={{
+                  padding: '8px 12px', fontSize: 12, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  background: active ? st.bg : '#fff',
+                  color: active ? st.color : '#1A2B4A',
+                  fontWeight: active ? 600 : 400,
+                }}
+              >
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: st.color, flexShrink: 0 }} />
+                {st.label.replace(/^[✓◷✕] /, '')}
+                {active && <span style={{ marginLeft: 'auto', fontSize: 11, color: st.color }}>✓</span>}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -69,6 +104,7 @@ export default function Library() {
   const [deleting, setDeleting] = useState(null)
   const [enlarged, setEnlarged] = useState(null)
   const [expandedIds, setExpandedIds] = useState(new Set())
+  const [openDropdownId, setOpenDropdownId] = useState(null)
 
   // Filtering
   const [searchQuery, setSearchQuery] = useState('')
@@ -95,6 +131,13 @@ export default function Library() {
       .then(d => { setAvatars(d.avatars ?? []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    if (!openDropdownId) return
+    function handleClick() { setOpenDropdownId(null) }
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
+  }, [openDropdownId])
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
@@ -169,11 +212,10 @@ export default function Library() {
     setFilterTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
   }
 
-  async function cycleApproval(avatarId) {
+  async function setApproval(avatarId, status) {
+    setOpenDropdownId(null)
     const avatar = avatars.find(a => a.id === avatarId)
-    const current = avatar.approvalStatus ?? 'approved'
-    const next = APPROVAL_STATES[(APPROVAL_STATES.indexOf(current) + 1) % APPROVAL_STATES.length]
-    const updated = { ...avatar, approvalStatus: next }
+    const updated = { ...avatar, approvalStatus: status }
     await saveAvatarUpdate(updated)
     setAvatars(prev => prev.map(a => a.id === avatarId ? updated : a))
   }
@@ -373,7 +415,12 @@ export default function Library() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 15, fontWeight: 600 }}>{avatar.name}</span>
-                        <ApprovalBadge status={avatar.approvalStatus ?? 'approved'} onClick={() => cycleApproval(avatar.id)} />
+                        <ApprovalDropdown
+                          status={avatar.approvalStatus ?? 'pending'}
+                          isOpen={openDropdownId === avatar.id}
+                          onToggle={() => setOpenDropdownId(openDropdownId === avatar.id ? null : avatar.id)}
+                          onSelect={status => setApproval(avatar.id, status)}
+                        />
                         {/* Tags inline */}
                         {(avatar.tags ?? []).map(t => <Tag key={t} label={t} />)}
                       </div>
