@@ -464,21 +464,13 @@ export default function Environment() {
       const existing = library.find(a => a.id === selectedAvatarId)
       if (existing) {
         const updatedEnvironments = [...(existing.environments ?? []), newEnv]
-        // Delete old entry and re-save with new environment appended
-        await fetch('/api/library', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'avatars', id: selectedAvatarId }),
-        })
         await fetch('/api/library', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'avatars',
             entry: {
-              name: existing.name,
-              avatarUrl: existing.avatarUrl,
-              meta: existing.meta,
+              ...existing,
               characterSheet: existing.characterSheet ?? null,
               environments: updatedEnvironments,
             },

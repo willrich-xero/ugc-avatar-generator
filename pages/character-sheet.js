@@ -193,12 +193,6 @@ export default function CharacterSheet() {
         },
       }),
     })
-    // Also delete old entry (we unshift a new one)
-    await fetch('/api/library', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'avatars', id: selectedAvatarId }),
-    })
     setSavingSheet(false)
     setSheetSaved(true)
   }

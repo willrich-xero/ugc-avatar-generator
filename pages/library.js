@@ -180,11 +180,6 @@ export default function Library() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'avatars', entry: updatedAvatar }),
     })
-    await fetch('/api/library', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'avatars', id: updatedAvatar.id }),
-    })
   }
 
   async function addTag(avatarId, tag) {

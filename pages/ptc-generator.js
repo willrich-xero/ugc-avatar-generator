@@ -111,21 +111,12 @@ export default function PTCGenerator() {
     const updatedPTCShots = [...(existing.ptcShots ?? []), ...newPTCShots]
 
     await fetch('/api/library', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'avatars', id: selectedAvatarId }),
-    })
-    await fetch('/api/library', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type: 'avatars',
         entry: {
-          name: existing.name,
-          avatarUrl: existing.avatarUrl,
-          meta: existing.meta,
-          characterSheet: existing.characterSheet ?? null,
-          environments: existing.environments ?? [],
+          ...existing,
           ptcShots: updatedPTCShots,
         },
       }),
