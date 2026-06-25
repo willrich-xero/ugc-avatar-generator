@@ -357,7 +357,11 @@ export default function Environment() {
 
   const withCharacter = true
   const selectedAvatar = library.find(a => a.id === selectedAvatarId)
-  const libraryAvatarReady = selectedAvatar?.characterSheet?.fullBodyFront && selectedAvatar?.characterSheet?.fullBodySide && selectedAvatar?.characterSheet?.expressions
+  const cs = selectedAvatar?.characterSheet
+  const libraryAvatarReady = cs && (
+    (cs.fullBodyGrid && cs.expressions) ||
+    (cs.fullBodyFront && cs.fullBodySide && cs.expressions)
+  )
   const refImagesReady = withCharacter
     ? (charPickerMode === 'library' ? !!libraryAvatarReady : refPreviews.filter(Boolean).length === 3)
     : true
@@ -378,7 +382,9 @@ export default function Environment() {
         setProgressLabel('Uploading reference images...')
         // Use library character sheet URLs if available, otherwise use manual uploads
         const imageSources = charPickerMode === 'library' && libraryAvatarReady
-          ? [selectedAvatar.characterSheet.fullBodyFront, selectedAvatar.characterSheet.fullBodySide, selectedAvatar.characterSheet.expressions]
+          ? (cs.fullBodyGrid
+              ? [cs.fullBodyGrid, cs.expressions]
+              : [cs.fullBodyFront, cs.fullBodySide, cs.expressions])
           : refImages.filter(Boolean)
 
         const resolvedUrls = await Promise.all(imageSources.map(async (img, i) => {
