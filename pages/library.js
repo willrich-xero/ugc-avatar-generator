@@ -212,12 +212,16 @@ export default function Library() {
     setFilterTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
   }
 
+  const savingApprovalRef = useRef(false)
   async function setApproval(avatarId, status) {
+    if (savingApprovalRef.current) return
+    savingApprovalRef.current = true
     setOpenDropdownId(null)
     const avatar = avatars.find(a => a.id === avatarId)
     const updated = { ...avatar, approvalStatus: status }
+    setAvatars(prev => prev.map(a => a.id === avatarId ? updated : a)) // optimistic
     await saveAvatarUpdate(updated)
-    setAvatars(prev => prev.map(a => a.id === avatarId ? updated : a))
+    savingApprovalRef.current = false
   }
 
   async function removePtcShot(avatarId, index) {
@@ -399,7 +403,7 @@ export default function Library() {
             {filteredAvatars.map(avatar => {
               const isExpanded = expandedIds.has(avatar.id)
               return (
-                <div key={avatar.id} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden' }}>
+                <div key={avatar.id} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12 }}>
 
                   {/* ── Collapsed row (always visible) ── */}
                   <div
