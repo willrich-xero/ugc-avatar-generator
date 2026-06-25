@@ -316,8 +316,12 @@ export default function Environment() {
   const [selectedOutput, setSelectedOutput] = useState(null)
   const [enlargedOutput, setEnlargedOutput] = useState(null)
   const [modifyNotes, setModifyNotes] = useState('')
-  const [showModifyInput, setShowModifyInput] = useState(false)
   const [modifyStatus, setModifyStatus] = useState('idle') // idle | running | done | error
+  const [modifyProgress, setModifyProgress] = useState(0)
+  const [modifyProgressLabel, setModifyProgressLabel] = useState('')
+  const [modifyOutputs, setModifyOutputs] = useState([])
+  const [selectedModifyOutput, setSelectedModifyOutput] = useState(null)
+  const [sourceImageUrl, setSourceImageUrl] = useState(null)
   const pollRef = useRef(null)
   const modifyPollRef = useRef(null)
 
@@ -500,40 +504,75 @@ export default function Environment() {
     const imageUrl = outputs[selectedOutput]?.url
     if (!imageUrl) return
 
+    setSourceImageUrl(imageUrl)
+    setModifyOutputs([])
+    setSelectedModifyOutput(null)
     setModifyStatus('running')
+    setModifyProgress(5)
+    setModifyProgressLabel('Sending to Flora…')
+    setStep(4)
+
     try {
       const res = await fetch('/api/modify-environment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageUrl, notes: modifyNotes.trim() }),
       })
-      if (!res.ok) { setModifyStatus('error'); return }
+      if (!res.ok) { setModifyStatus('error'); setModifyProgressLabel('Failed to start modification.'); return }
       const { runId } = await res.json()
 
+      setModifyProgress(15)
+      setModifyProgressLabel('Modification running…')
+
+      let elapsed = 0
       modifyPollRef.current = setInterval(async () => {
+        elapsed += 3
+        setModifyProgress(Math.min(15 + (elapsed / 120) * 75, 88))
         const p = await fetch(`/api/poll?runId=${runId}&techniqueSlug=ugc-image-modifier`)
         const pd = await p.json()
         if (pd.status === 'complete') {
           clearInterval(modifyPollRef.current)
-          const newUrl = pd.outputs?.[0]?.url
-          if (newUrl) {
-            setOutputs(prev => {
-              const next = [...prev]
-              next[selectedOutput] = { ...next[selectedOutput], url: newUrl }
-              return next
-            })
-          }
+          setModifyOutputs(pd.outputs ?? [])
+          setModifyProgress(100)
+          setModifyProgressLabel('Done — select your preferred result')
           setModifyStatus('done')
-          setShowModifyInput(false)
-          setModifyNotes('')
         } else if (pd.status === 'failed') {
           clearInterval(modifyPollRef.current)
           setModifyStatus('error')
+          setModifyProgressLabel('Modification failed.')
         }
       }, 3000)
-    } catch {
+    } catch (err) {
       setModifyStatus('error')
+      setModifyProgressLabel('Modification failed.')
     }
+  }
+
+  async function approveModifiedAndSave() {
+    if (selectedModifyOutput === null) return
+    const output = modifyOutputs[selectedModifyOutput]
+    const newEnv = {
+      url: output?.url,
+      name: `WFH Office — ${fields.roomSize} (modified)`,
+      meta: `${fields.deskStyle} · ${fields.lighting} · ${fields.tidiness}`,
+      createdAt: new Date().toISOString(),
+    }
+    setSavedEnvironments(prev => [...prev, { id: Date.now(), ...newEnv }])
+
+    if (selectedAvatarId) {
+      const existing = library.find(a => a.id === selectedAvatarId)
+      if (existing) {
+        await fetch('/api/library', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'avatars',
+            entry: { ...existing, characterSheet: existing.characterSheet ?? null, environments: [...(existing.environments ?? []), newEnv] },
+          }),
+        })
+      }
+    }
+    setStep(3)
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -776,42 +815,22 @@ export default function Environment() {
 
             {/* Modify selected image */}
             {genStatus === 'done' && selectedOutput !== null && (
-              <div style={{ marginBottom: 16, borderRadius: 8, border: '1px solid #E2E8F0', background: '#F7F9FC', padding: 12 }}>
-                {!showModifyInput ? (
-                  <button
-                    onClick={() => { setShowModifyInput(true); setModifyStatus('idle') }}
-                    style={{ fontSize: 13, color: '#4A5568', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
-                  >
-                    ✏️ Modify selected image
-                  </button>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: '#4A5568' }}>Describe your changes</div>
-                    <textarea
-                      value={modifyNotes}
-                      onChange={e => setModifyNotes(e.target.value)}
-                      placeholder="e.g. Remove the plant from the desk"
-                      rows={3}
-                      style={{ width: '100%', padding: '8px 10px', fontSize: 13, border: '1px solid #E2E8F0', borderRadius: 6, fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box', background: '#fff' }}
-                    />
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        onClick={startModify}
-                        disabled={!modifyNotes.trim() || modifyStatus === 'running'}
-                        style={{ padding: '7px 16px', fontSize: 13, borderRadius: 6, border: '1px solid #13B5EA', background: '#13B5EA', color: '#fff', cursor: (!modifyNotes.trim() || modifyStatus === 'running') ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: !modifyNotes.trim() ? 0.5 : 1 }}
-                      >
-                        {modifyStatus === 'running' ? 'Modifying…' : 'Apply modification'}
-                      </button>
-                      <button
-                        onClick={() => { setShowModifyInput(false); setModifyNotes(''); setModifyStatus('idle') }}
-                        style={{ padding: '7px 14px', fontSize: 13, borderRadius: 6, border: '1px solid #E2E8F0', background: '#fff', color: '#4A5568', cursor: 'pointer', fontFamily: 'inherit' }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                    {modifyStatus === 'error' && <div style={{ fontSize: 12, color: '#E74C3C' }}>Modification failed — please try again.</div>}
-                  </div>
-                )}
+              <div style={{ marginBottom: 16, borderRadius: 8, border: '1px solid #E2E8F0', background: '#F7F9FC', padding: '10px 14px' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#4A5568', marginBottom: 8 }}>Describe your changes</div>
+                <textarea
+                  value={modifyNotes}
+                  onChange={e => setModifyNotes(e.target.value)}
+                  placeholder="e.g. Remove the plant from the desk"
+                  rows={2}
+                  style={{ width: '100%', padding: '8px 10px', fontSize: 13, border: '1px solid #E2E8F0', borderRadius: 6, fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box', background: '#fff' }}
+                />
+                <button
+                  onClick={startModify}
+                  disabled={!modifyNotes.trim()}
+                  style={{ marginTop: 8, padding: '7px 16px', fontSize: 13, borderRadius: 6, border: '1px solid #13B5EA', background: '#13B5EA', color: '#fff', cursor: !modifyNotes.trim() ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: !modifyNotes.trim() ? 0.5 : 1 }}
+                >
+                  ✏️ Modify selected image →
+                </button>
               </div>
             )}
 
@@ -822,6 +841,81 @@ export default function Environment() {
                 : genStatus === 'done'
                   ? <Btn primary disabled={selectedOutput === null} onClick={approveAndSave}>{selectedOutput === null ? 'Select an output first' : 'Approve & save →'}</Btn>
                   : <Btn primary disabled>Generating...</Btn>
+              }
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 4: Modify ───────────────────────────────────────────── */}
+        {step === 4 && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              {sourceImageUrl && (
+                <img src={sourceImageUrl} style={{ width: 48, height: 60, objectFit: 'cover', borderRadius: 6, border: '1px solid #E2E8F0', flexShrink: 0 }} />
+              )}
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Modifying image</div>
+                <div style={{ fontSize: 13, color: '#4A5568', fontStyle: 'italic' }}>"{modifyNotes}"</div>
+              </div>
+            </div>
+
+            {modifyStatus === 'error' && <Notice error>{modifyProgressLabel}</Notice>}
+
+            {modifyStatus !== 'idle' && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ height: 4, background: '#E2E8F0', borderRadius: 2, marginBottom: 8, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', background: '#13B5EA', borderRadius: 2, width: `${modifyProgress}%`, transition: 'width 0.4s ease' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#4A5568' }}>
+                  <span>{modifyProgressLabel}</span><span>{Math.round(modifyProgress)}%</span>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+              {[0, 1, 2, 3].map(i => {
+                const output = modifyOutputs[i]; const isSelected = selectedModifyOutput === i
+                return (
+                  <div key={i} onClick={() => output && setSelectedModifyOutput(i)} style={{
+                    aspectRatio: '9/16',
+                    borderRadius: 8, overflow: 'hidden',
+                    border: isSelected ? '2px solid #13B5EA' : '1px solid #E2E8F0',
+                    background: '#F7F9FC', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: output ? 'pointer' : 'default', position: 'relative',
+                    animation: modifyStatus === 'running' && !output ? 'pulse 1.5s ease-in-out infinite' : 'none',
+                  }}>
+                    {output?.url
+                      ? <img src={output.url} alt={`Option ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <span style={{ fontSize: 12, color: '#4A5568' }}>{modifyStatus === 'running' ? 'Generating...' : `Option ${i + 1}`}</span>
+                    }
+                    {isSelected && (
+                      <div style={{ position: 'absolute', top: 8, right: 8, width: 24, height: 24, borderRadius: '50%', background: '#13B5EA', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 7.5L11 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </div>
+                    )}
+                    {output?.url && (
+                      <div onClick={e => { e.stopPropagation(); setEnlargedOutput(output.url) }} style={{
+                        position: 'absolute', bottom: 8, right: 8, width: 28, height: 28,
+                        borderRadius: 6, background: 'rgba(0,0,0,0.45)', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                      }}>
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                          <path d="M8 1h4v4M5 8L12 1M1 5V1h4M5 5L1 1" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Btn onClick={() => { clearInterval(modifyPollRef.current); setStep(2) }}>← Back to results</Btn>
+              {modifyStatus === 'done'
+                ? <Btn primary disabled={selectedModifyOutput === null} onClick={approveModifiedAndSave}>{selectedModifyOutput === null ? 'Select an output first' : 'Approve & save →'}</Btn>
+                : modifyStatus === 'error'
+                  ? <Btn primary onClick={startModify}>Retry</Btn>
+                  : <Btn primary disabled>Modifying...</Btn>
               }
             </div>
           </div>
