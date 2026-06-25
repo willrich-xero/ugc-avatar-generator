@@ -11,7 +11,7 @@ function buildEnvDesc(f) {
   }[f.deskStyle] || 'a desk'
 
   const sizeDesc = {
-    'Compact corner': 'a compact corner setup — the desk fits snugly into a corner of the room, cosy and contained',
+    'Compact corner': '',
     'Medium dedicated room': 'a medium-sized dedicated home office room with space around the desk',
     'Large dedicated room': 'a spacious dedicated home office with room to breathe on all sides',
   }[f.roomSize] || 'a home office'
@@ -21,8 +21,8 @@ function buildEnvDesc(f) {
     'Coloured painted wall': 'a bold coloured painted wall — a rich, saturated tone like deep green, terracotta, navy, or burnt orange',
     'Bookshelves': 'bookshelves filled with books and personal objects on the wall behind',
     'Pinboard': 'a pinboard with notes, cards, and papers pinned up on the wall',
-    'Mix of shelving and artwork': 'a mix of open shelving and framed artwork on the wall',
-    'Artwork only': 'framed artwork and prints on the wall',
+    'Shelving': 'open shelving on the wall filled with books, plants, and personal objects',
+    'Artwork': 'framed artwork and prints on the wall',
   }[f.wallTreatment] || 'plain walls'
 
   const lightDesc = 'natural light from a nearby window only — no artificial lighting, soft and directional'
@@ -30,15 +30,18 @@ function buildEnvDesc(f) {
   const tidyDesc = {
     'Very tidy': 'everything neatly arranged, minimal items on the desk surface, ordered and calm',
     'Lived-in': 'everyday objects naturally scattered across the desk — used but not chaotic. Only include items explicitly listed in the personal touches. Do not add books or mugs unless specified.',
-    'Busy / cluttered': 'papers, notebooks, cups, plants and objects covering most surfaces — a genuinely busy working desk',
   }[f.tidiness] || 'lived-in'
 
   const techDesc = {
     'Laptop only': 'a laptop open on the desk. The laptop screen displays a solid, flat, pure green (#00FF00) with no gradients, reflections, glow, or light spill onto the keyboard, desk, or surroundings',
     'Laptop + external monitor': 'a laptop alongside an external monitor on the desk. Both screens display a solid, flat, pure green (#00FF00) with no gradients, reflections, glow, or light spill onto any surrounding surfaces or the character',
-    'Dual monitors': 'two monitors side by side on the desk, with a keyboard and mouse on the desk surface, no laptop visible. Monitors sit directly on the desk surface — not on books, risers, or any elevated platform. Both screens display a solid, flat, pure green (#00FF00) with no gradients, reflections, glow, or light spill onto any surrounding surfaces or the character',
     'No tech visible': 'no screens or tech visible — just books and analogue objects',
   }[f.tech] || 'a laptop on the desk'
+
+  const housingDesc = {
+    'House': 'a house — the space has the feel of a standalone home, with a sense of spaciousness and permanence',
+    'Apartment': 'an apartment — the space has the feel of a flat or apartment, compact and urban, with a sense of city living',
+  }[f.housingType] || ''
 
   const touchesDesc = f.personalTouches.length
     ? `Personal touches include: ${f.personalTouches.join(', ').toLowerCase()}.`
@@ -48,11 +51,11 @@ function buildEnvDesc(f) {
     ? `\n\nAdditional details: ${f.additionalNotes.trim()}`
     : ''
 
-  return { deskDesc, sizeDesc, wallDesc, lightDesc, tidyDesc, techDesc, touchesDesc, additionalDesc }
+  return { deskDesc, sizeDesc, wallDesc, lightDesc, tidyDesc, techDesc, touchesDesc, additionalDesc, housingDesc }
 }
 
 function buildEmptyRoomPrompt(f) {
-  const { deskDesc, sizeDesc, wallDesc, lightDesc, tidyDesc, techDesc, touchesDesc, additionalDesc } = buildEnvDesc(f)
+  const { deskDesc, sizeDesc, wallDesc, lightDesc, tidyDesc, techDesc, touchesDesc, additionalDesc, housingDesc } = buildEnvDesc(f)
   const timeDesc = f.timeOfDay === 'Nighttime'
     ? 'nighttime — no natural light, room lit by warm desk lamp and ambient indoor lighting. Windows dark outside.'
     : 'daytime — natural light from a window, bright and airy'
@@ -61,7 +64,7 @@ function buildEmptyRoomPrompt(f) {
 
 Time of day: ${timeDesc}.
 
-The space is ${sizeDesc}. There is ${deskDesc} placed against the wall — not floating in the middle of the room. The desk has ${techDesc}. The walls have ${wallDesc}. The desk surface is ${tidyDesc}. The lighting is ${lightDesc}. ${touchesDesc}
+The space is ${sizeDesc}${housingDesc ? ` in ${housingDesc}` : ''}. There is ${deskDesc} placed against the wall — not floating in the middle of the room. The desk has ${techDesc}. The walls have ${wallDesc}. The desk surface is ${tidyDesc}. The lighting is ${lightDesc}. ${touchesDesc}
 
 The space feels functional and personal — a real working environment, not a corporate office or staged photo. No people in the frame.${additionalDesc}
 
@@ -73,7 +76,7 @@ Avoid: Any people or figures, DSLR sharpness, perfectly composed shot, wide dept
 }
 
 function buildWithCharacterPrompt(f) {
-  const { deskDesc, sizeDesc, wallDesc, lightDesc, tidyDesc, techDesc, touchesDesc, additionalDesc } = buildEnvDesc(f)
+  const { deskDesc, sizeDesc, wallDesc, lightDesc, tidyDesc, techDesc, touchesDesc, additionalDesc, housingDesc } = buildEnvDesc(f)
   const timeDesc = f.timeOfDay === 'Nighttime'
     ? 'nighttime — no natural light, room lit by warm desk lamp and ambient indoor lighting. Windows dark outside.'
     : 'daytime — natural light from a window, bright and airy'
@@ -86,7 +89,7 @@ function buildWithCharacterPrompt(f) {
 
 Time of day: ${timeDesc}.
 
-Environment: The space is ${sizeDesc}. There is ${deskDesc} placed against the wall — not floating in the middle of the room. The desk has ${techDesc}. The walls have ${wallDesc}. The desk surface is ${tidyDesc}. The lighting is ${lightDesc}. ${touchesDesc}
+Environment: The space is ${sizeDesc}${housingDesc ? ` in ${housingDesc}` : ''}. There is ${deskDesc} placed against the wall — not floating in the middle of the room. The desk has ${techDesc}. The walls have ${wallDesc}. The desk surface is ${tidyDesc}. The lighting is ${lightDesc}. ${touchesDesc}
 
 The space feels functional and personal — a real working environment, not a corporate office or staged photo.${additionalDesc}
 
@@ -106,12 +109,13 @@ Avoid: Character standing rather than seated, character centred symmetrically in
 // ─── Options ─────────────────────────────────────────────────────────────────
 const TIME_OF_DAY = ['Daytime']
 const DESK_STYLES = ['Timber / warm wood', 'White / IKEA style']
-const ROOM_SIZES = ['Compact corner', 'Medium dedicated room', 'Large dedicated room']
-const WALL_TREATMENTS = ['Plain painted wall', 'Coloured painted wall', 'Bookshelves', 'Pinboard', 'Mix of shelving and artwork', 'Artwork only']
+const ROOM_SIZES = ['Medium dedicated room', 'Large dedicated room']
+const WALL_TREATMENTS = ['Plain painted wall', 'Coloured painted wall', 'Bookshelves', 'Shelving', 'Pinboard', 'Artwork']
 const LIGHTING = ['Window light only']
-const TIDINESS = ['Very tidy', 'Lived-in', 'Busy / cluttered']
-const TECH = ['Laptop only', 'Laptop + external monitor', 'Dual monitors', 'No tech visible']
-const PERSONAL_TOUCHES = ['Houseplants', 'Framed photos', 'Books stacked on desk', 'Coffee mug', 'Sticky notes', 'Polaroids pinned up', 'Small figurines or objects', 'Stationery pot with pens', 'Headphones on desk', 'Water bottle']
+const HOUSING_TYPES = ['House', 'Apartment']
+const TIDINESS = ['Very tidy', 'Lived-in']
+const TECH = ['Laptop only', 'Laptop + external monitor', 'No tech visible']
+const PERSONAL_TOUCHES = ['Houseplants', 'Framed photos', 'Books stacked on desk', 'Coffee mug', 'Sticky notes', 'Polaroids pinned up', 'Small figurines or objects', 'Stationery pot with pens', 'Headphones on desk', 'Water bottle', 'Artwork']
 
 // ─── Randomise ───────────────────────────────────────────────────────────────
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)] }
@@ -119,9 +123,10 @@ function pickN(arr, n) { return [...arr].sort(() => 0.5 - Math.random()).slice(0
 
 const DEFAULT = {
   timeOfDay: 'Daytime',
+  housingType: 'House',
   deskStyle: 'Timber / warm wood',
   roomSize: 'Medium dedicated room',
-  wallTreatment: 'Mix of shelving and artwork',
+  wallTreatment: 'Shelving',
   lighting: 'Window + desk lamp',
   tidiness: 'Lived-in',
   tech: 'Laptop only',
@@ -310,7 +315,15 @@ export default function Environment() {
   const [outputs, setOutputs] = useState([])
   const [selectedOutput, setSelectedOutput] = useState(null)
   const [enlargedOutput, setEnlargedOutput] = useState(null)
+  const [modifyNotes, setModifyNotes] = useState('')
+  const [modifyStatus, setModifyStatus] = useState('idle') // idle | running | done | error
+  const [modifyProgress, setModifyProgress] = useState(0)
+  const [modifyProgressLabel, setModifyProgressLabel] = useState('')
+  const [modifyOutputs, setModifyOutputs] = useState([])
+  const [selectedModifyOutput, setSelectedModifyOutput] = useState(null)
+  const [sourceImageUrl, setSourceImageUrl] = useState(null)
   const pollRef = useRef(null)
+  const modifyPollRef = useRef(null)
 
   const setSingle = (key, val) => setFields(f => ({ ...f, [key]: val }))
   const toggleMulti = (key, val) => setFields(f => ({
@@ -322,6 +335,7 @@ export default function Environment() {
     setFields(prev => ({
       ...prev,
       timeOfDay: 'Daytime',
+      housingType: pick(HOUSING_TYPES),
       deskStyle: pick(DESK_STYLES),
       roomSize: pick(ROOM_SIZES),
       wallTreatment: pick(WALL_TREATMENTS),
@@ -357,7 +371,10 @@ export default function Environment() {
 
   const withCharacter = true
   const selectedAvatar = library.find(a => a.id === selectedAvatarId)
-  const libraryAvatarReady = selectedAvatar?.characterSheet?.fullBodyFront && selectedAvatar?.characterSheet?.fullBodySide && selectedAvatar?.characterSheet?.expressions
+  const cs = selectedAvatar?.characterSheet
+  const isV2Sheet = !!(cs?.fullBodyGrid && cs?.expressions)
+  const isV1Sheet = !!(cs?.fullBodyFront && cs?.fullBodySide && cs?.expressions) && !isV2Sheet
+  const libraryAvatarReady = isV2Sheet
   const refImagesReady = withCharacter
     ? (charPickerMode === 'library' ? !!libraryAvatarReady : refPreviews.filter(Boolean).length === 3)
     : true
@@ -377,8 +394,9 @@ export default function Environment() {
         // Images that are already URLs (from character sheet) are passed through directly.
         setProgressLabel('Uploading reference images...')
         // Use library character sheet URLs if available, otherwise use manual uploads
+        // v2 sheet: fullBodyGrid, expressions, base avatar image
         const imageSources = charPickerMode === 'library' && libraryAvatarReady
-          ? [selectedAvatar.characterSheet.fullBodyFront, selectedAvatar.characterSheet.fullBodySide, selectedAvatar.characterSheet.expressions]
+          ? [cs.fullBodyGrid, cs.expressions, selectedAvatar.avatarUrl]
           : refImages.filter(Boolean)
 
         const resolvedUrls = await Promise.all(imageSources.map(async (img, i) => {
@@ -464,24 +482,92 @@ export default function Environment() {
       const existing = library.find(a => a.id === selectedAvatarId)
       if (existing) {
         const updatedEnvironments = [...(existing.environments ?? []), newEnv]
-        // Delete old entry and re-save with new environment appended
-        await fetch('/api/library', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'avatars', id: selectedAvatarId }),
-        })
         await fetch('/api/library', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'avatars',
             entry: {
-              name: existing.name,
-              avatarUrl: existing.avatarUrl,
-              meta: existing.meta,
+              ...existing,
               characterSheet: existing.characterSheet ?? null,
               environments: updatedEnvironments,
             },
+          }),
+        })
+      }
+    }
+    setStep(3)
+  }
+
+  async function startModify() {
+    if (selectedOutput === null || !modifyNotes.trim()) return
+    const imageUrl = outputs[selectedOutput]?.url
+    if (!imageUrl) return
+
+    setSourceImageUrl(imageUrl)
+    setModifyOutputs([])
+    setSelectedModifyOutput(null)
+    setModifyStatus('running')
+    setModifyProgress(5)
+    setModifyProgressLabel('Sending to Flora…')
+    setStep(4)
+
+    try {
+      const res = await fetch('/api/modify-environment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl, notes: modifyNotes.trim() }),
+      })
+      if (!res.ok) { setModifyStatus('error'); setModifyProgressLabel('Failed to start modification.'); return }
+      const { runId } = await res.json()
+
+      setModifyProgress(15)
+      setModifyProgressLabel('Modification running…')
+
+      let elapsed = 0
+      modifyPollRef.current = setInterval(async () => {
+        elapsed += 3
+        setModifyProgress(Math.min(15 + (elapsed / 120) * 75, 88))
+        const p = await fetch(`/api/poll?runId=${runId}&techniqueSlug=ugc-image-modifier`)
+        const pd = await p.json()
+        if (pd.status === 'complete') {
+          clearInterval(modifyPollRef.current)
+          setModifyOutputs(pd.outputs ?? [])
+          setModifyProgress(100)
+          setModifyProgressLabel('Done — select your preferred result')
+          setModifyStatus('done')
+        } else if (pd.status === 'failed') {
+          clearInterval(modifyPollRef.current)
+          setModifyStatus('error')
+          setModifyProgressLabel('Modification failed.')
+        }
+      }, 3000)
+    } catch (err) {
+      setModifyStatus('error')
+      setModifyProgressLabel('Modification failed.')
+    }
+  }
+
+  async function approveModifiedAndSave() {
+    if (selectedModifyOutput === null) return
+    const output = modifyOutputs[selectedModifyOutput]
+    const newEnv = {
+      url: output?.url,
+      name: `WFH Office — ${fields.roomSize} (modified)`,
+      meta: `${fields.deskStyle} · ${fields.lighting} · ${fields.tidiness}`,
+      createdAt: new Date().toISOString(),
+    }
+    setSavedEnvironments(prev => [...prev, { id: Date.now(), ...newEnv }])
+
+    if (selectedAvatarId) {
+      const existing = library.find(a => a.id === selectedAvatarId)
+      if (existing) {
+        await fetch('/api/library', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'avatars',
+            entry: { ...existing, characterSheet: existing.characterSheet ?? null, environments: [...(existing.environments ?? []), newEnv] },
           }),
         })
       }
@@ -574,7 +660,10 @@ export default function Environment() {
                               {!avatar.characterSheet && (
                                 <div style={{ fontSize: 11, color: '#E67E22', marginTop: 2 }}>⚠ No character sheet — <Link href={`/character-sheet?avatarId=${avatar.id}`} style={{ color: '#13B5EA' }}>generate one first</Link></div>
                               )}
-                              {avatar.characterSheet && (
+                              {isV1Sheet && avatar.id === selectedAvatarId && (
+                                <div style={{ fontSize: 11, color: '#E67E22', marginTop: 2 }}>⚠ Old character sheet — <Link href={`/character-sheet?avatarId=${avatar.id}`} style={{ color: '#13B5EA' }}>regenerate to use here</Link></div>
+                              )}
+                              {avatar.characterSheet?.fullBodyGrid && avatar.characterSheet?.expressions && (
                                 <div style={{ fontSize: 11, color: '#27AE60', marginTop: 2 }}>✓ Character sheet ready</div>
                               )}
                             </div>
@@ -587,7 +676,10 @@ export default function Environment() {
                         ))}
                       </div>
                     )}
-                    {selectedAvatarId && !libraryAvatarReady && (
+                    {selectedAvatarId && isV1Sheet && (
+                      <Notice warning>This avatar has an old character sheet that's no longer compatible. <Link href={`/character-sheet?avatarId=${selectedAvatarId}`} style={{ color: '#13B5EA' }}>Regenerate it →</Link></Notice>
+                    )}
+                    {selectedAvatarId && !cs && (
                       <Notice warning>This avatar doesn't have a character sheet yet. <Link href={`/character-sheet?avatarId=${selectedAvatarId}`} style={{ color: '#13B5EA' }}>Generate one →</Link></Notice>
                     )}
                   </div>
@@ -605,6 +697,9 @@ export default function Environment() {
                 )}
               </div>
             )}
+
+            <span style={S.sectionLabel}>House type</span>
+            <ToggleGroup options={HOUSING_TYPES} selected={fields.housingType} onToggle={v => setSingle('housingType', v)} />
 
             <span style={S.sectionLabel}>Desk style</span>
             <ToggleGroup options={DESK_STYLES} selected={fields.deskStyle} onToggle={v => setSingle('deskStyle', v)} />
@@ -718,6 +813,27 @@ export default function Environment() {
               </div>
             )}
 
+            {/* Modify selected image */}
+            {genStatus === 'done' && selectedOutput !== null && (
+              <div style={{ marginBottom: 16, borderRadius: 8, border: '1px solid #E2E8F0', background: '#F7F9FC', padding: '10px 14px' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#4A5568', marginBottom: 8 }}>Describe your changes</div>
+                <textarea
+                  value={modifyNotes}
+                  onChange={e => setModifyNotes(e.target.value)}
+                  placeholder="e.g. Remove the plant from the desk"
+                  rows={2}
+                  style={{ width: '100%', padding: '8px 10px', fontSize: 13, border: '1px solid #E2E8F0', borderRadius: 6, fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box', background: '#fff' }}
+                />
+                <button
+                  onClick={startModify}
+                  disabled={!modifyNotes.trim()}
+                  style={{ marginTop: 8, padding: '7px 16px', fontSize: 13, borderRadius: 6, border: '1px solid #13B5EA', background: '#13B5EA', color: '#fff', cursor: !modifyNotes.trim() ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: !modifyNotes.trim() ? 0.5 : 1 }}
+                >
+                  ✏️ Modify selected image →
+                </button>
+              </div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <Btn onClick={() => setStep(1)}>← Edit configuration</Btn>
               {genStatus === 'idle' || genStatus === 'error'
@@ -725,6 +841,81 @@ export default function Environment() {
                 : genStatus === 'done'
                   ? <Btn primary disabled={selectedOutput === null} onClick={approveAndSave}>{selectedOutput === null ? 'Select an output first' : 'Approve & save →'}</Btn>
                   : <Btn primary disabled>Generating...</Btn>
+              }
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 4: Modify ───────────────────────────────────────────── */}
+        {step === 4 && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              {sourceImageUrl && (
+                <img src={sourceImageUrl} style={{ width: 48, height: 60, objectFit: 'cover', borderRadius: 6, border: '1px solid #E2E8F0', flexShrink: 0 }} />
+              )}
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Modifying image</div>
+                <div style={{ fontSize: 13, color: '#4A5568', fontStyle: 'italic' }}>"{modifyNotes}"</div>
+              </div>
+            </div>
+
+            {modifyStatus === 'error' && <Notice error>{modifyProgressLabel}</Notice>}
+
+            {modifyStatus !== 'idle' && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ height: 4, background: '#E2E8F0', borderRadius: 2, marginBottom: 8, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', background: '#13B5EA', borderRadius: 2, width: `${modifyProgress}%`, transition: 'width 0.4s ease' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#4A5568' }}>
+                  <span>{modifyProgressLabel}</span><span>{Math.round(modifyProgress)}%</span>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+              {[0, 1, 2, 3].map(i => {
+                const output = modifyOutputs[i]; const isSelected = selectedModifyOutput === i
+                return (
+                  <div key={i} onClick={() => output && setSelectedModifyOutput(i)} style={{
+                    aspectRatio: '9/16',
+                    borderRadius: 8, overflow: 'hidden',
+                    border: isSelected ? '2px solid #13B5EA' : '1px solid #E2E8F0',
+                    background: '#F7F9FC', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: output ? 'pointer' : 'default', position: 'relative',
+                    animation: modifyStatus === 'running' && !output ? 'pulse 1.5s ease-in-out infinite' : 'none',
+                  }}>
+                    {output?.url
+                      ? <img src={output.url} alt={`Option ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <span style={{ fontSize: 12, color: '#4A5568' }}>{modifyStatus === 'running' ? 'Generating...' : `Option ${i + 1}`}</span>
+                    }
+                    {isSelected && (
+                      <div style={{ position: 'absolute', top: 8, right: 8, width: 24, height: 24, borderRadius: '50%', background: '#13B5EA', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4 7.5L11 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </div>
+                    )}
+                    {output?.url && (
+                      <div onClick={e => { e.stopPropagation(); setEnlargedOutput(output.url) }} style={{
+                        position: 'absolute', bottom: 8, right: 8, width: 28, height: 28,
+                        borderRadius: 6, background: 'rgba(0,0,0,0.45)', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                      }}>
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                          <path d="M8 1h4v4M5 8L12 1M1 5V1h4M5 5L1 1" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Btn onClick={() => { clearInterval(modifyPollRef.current); setStep(2) }}>← Back to results</Btn>
+              {modifyStatus === 'done'
+                ? <Btn primary disabled={selectedModifyOutput === null} onClick={approveModifiedAndSave}>{selectedModifyOutput === null ? 'Select an output first' : 'Approve & save →'}</Btn>
+                : modifyStatus === 'error'
+                  ? <Btn primary onClick={startModify}>Retry</Btn>
+                  : <Btn primary disabled>Modifying...</Btn>
               }
             </div>
           </div>

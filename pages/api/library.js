@@ -37,9 +37,16 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'type must be avatars or environments' })
       }
       const library = await readLibrary()
-      library[type].unshift({ ...entry, id: Date.now(), createdAt: new Date().toISOString() })
+      const existingIndex = library[type].findIndex(e => e.id === entry.id)
+      if (existingIndex >= 0) {
+        // Update existing entry in place — preserve id and createdAt
+        library[type][existingIndex] = { ...entry }
+      } else {
+        // New entry — assign a fresh id and createdAt
+        library[type].unshift({ ...entry, id: Date.now(), createdAt: new Date().toISOString() })
+      }
       await writeLibrary(library)
-      console.log('Saved to KV, type:', type, 'total:', library[type].length)
+      console.log('Saved to KV, type:', type, 'operation:', existingIndex >= 0 ? 'update' : 'insert', 'total:', library[type].length)
       return res.status(200).json({ success: true })
     }
 

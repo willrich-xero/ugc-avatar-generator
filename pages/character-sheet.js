@@ -70,8 +70,8 @@ function Steps({ current }) {
 }
 
 // ─── Output label map ─────────────────────────────────────────────────────────
-const OUTPUT_LABELS = ['Full body — front', 'Full body — side', 'Expressions grid']
-const OUTPUT_SUBLABELS = ['Standing, facing camera', 'Standing, side-on', 'Multiple angles & expressions']
+const OUTPUT_LABELS = ['Expressions grid', 'Full body grid']
+const OUTPUT_SUBLABELS = ['Multiple angles & expressions', 'Full body poses']
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function CharacterSheet() {
@@ -177,7 +177,7 @@ export default function CharacterSheet() {
   }
 
   async function saveSheetToLibrary() {
-    if (!selectedAvatarId || outputs.length < 3) return
+    if (!selectedAvatarId || outputs.length < 2) return
     setSavingSheet(true)
     await fetch('/api/library', {
       method: 'POST',
@@ -187,18 +187,11 @@ export default function CharacterSheet() {
         entry: {
           ...library.find(a => a.id === selectedAvatarId),
           characterSheet: {
-            fullBodyFront: outputs[0]?.url ?? null,
-            fullBodySide: outputs[1]?.url ?? null,
-            expressions: outputs[2]?.url ?? null,
+            expressions: outputs[0]?.url ?? null,
+            fullBodyGrid: outputs[1]?.url ?? null,
           },
         },
       }),
-    })
-    // Also delete old entry (we unshift a new one)
-    await fetch('/api/library', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'avatars', id: selectedAvatarId }),
     })
     setSavingSheet(false)
     setSheetSaved(true)
@@ -380,7 +373,7 @@ export default function CharacterSheet() {
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>Generating from avatar</div>
-                <div style={{ fontSize: 12, color: '#4A5568' }}>Full body front · Full body side · Expressions grid</div>
+                <div style={{ fontSize: 12, color: '#4A5568' }}>Expressions grid · Full body grid</div>
               </div>
               <div style={{ marginLeft: 'auto' }}>
                 <div style={{ width: 20, height: 20, border: '2px solid #13B5EA', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
@@ -398,10 +391,10 @@ export default function CharacterSheet() {
         {/* ── Step 3: Review outputs ─────────────────────────────────────── */}
         {step === 3 && (
           <div>
-            <Notice>Character sheet generated. These 3 images are ready to use as reference inputs in the environment generator.</Notice>
+            <Notice>Character sheet generated. These 2 images are ready to use as reference inputs in the environment generator.</Notice>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
-              {[0, 1, 2].map(i => {
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 24 }}>
+              {[0, 1].map(i => {
                 const output = outputs[i]
                 return (
                   <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
