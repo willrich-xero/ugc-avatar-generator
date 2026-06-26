@@ -530,7 +530,7 @@ export default function Environment() {
         setModifyProgress(Math.min(15 + (elapsed / 120) * 75, 88))
         const p = await fetch(`/api/poll?runId=${runId}&techniqueSlug=ugc-image-modifier`)
         const pd = await p.json()
-        if (pd.status === 'complete') {
+        if (pd.status === 'completed') {
           clearInterval(modifyPollRef.current)
           setModifyOutputs(pd.outputs ?? [])
           setModifyProgress(100)
