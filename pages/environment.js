@@ -805,13 +805,6 @@ export default function Environment() {
               })}
             </div>
 
-            {/* Lightbox */}
-            {enlargedOutput && (
-              <div onClick={() => setEnlargedOutput(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, cursor: 'zoom-out' }}>
-                <img src={enlargedOutput} alt="Enlarged" style={{ maxHeight: '90vh', maxWidth: '90vw', borderRadius: 10, objectFit: 'contain', boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }} />
-                <div style={{ position: 'absolute', top: 20, right: 24, width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 18, color: 'white' }}>✕</div>
-              </div>
-            )}
 
             {/* Modify selected image */}
             {genStatus === 'done' && selectedOutput !== null && (
@@ -944,6 +937,13 @@ export default function Environment() {
           </div>
         )}
       </div>
+      {/* Lightbox — shared across all steps */}
+      {enlargedOutput && (
+        <div onClick={() => setEnlargedOutput(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, cursor: 'zoom-out' }}>
+          <img src={enlargedOutput} alt="Enlarged" style={{ maxHeight: '90vh', maxWidth: '90vw', borderRadius: 10, objectFit: 'contain', boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }} />
+          <div style={{ position: 'absolute', top: 20, right: 24, width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 18, color: 'white' }}>✕</div>
+        </div>
+      )}
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}*{box-sizing:border-box}textarea:focus{outline:2px solid #13B5EA;outline-offset:1px}`}</style>
     </>
   )
