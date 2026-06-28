@@ -175,6 +175,9 @@ export default function PublicLibrary() {
     if (filterTags.length > 0 && !filterTags.every(t => (a.tags ?? []).includes(t))) return false
     if (filterStatus && (a.approvalStatus ?? 'pending') !== filterStatus) return false
     return true
+  }).sort((a, b) => {
+    const order = { approved: 0, pending: 1, rejected: 2 }
+    return (order[a.approvalStatus ?? 'pending'] ?? 1) - (order[b.approvalStatus ?? 'pending'] ?? 1)
   })
 
   function toggleTag(tag) {
