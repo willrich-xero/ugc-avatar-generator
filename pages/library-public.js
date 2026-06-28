@@ -44,22 +44,32 @@ function MetaBadge({ label, value }) {
   )
 }
 
+function csImages(characterSheet) {
+  if (!characterSheet) return []
+  if (characterSheet.fullBodyGrid != null) {
+    // v2 — expressions + fullBodyGrid
+    return ['expressions', 'fullBodyGrid'].map(k => characterSheet[k]).filter(Boolean)
+  }
+  // v1 — fullBodyFront + fullBodySide + expressions
+  return ['fullBodyFront', 'fullBodySide', 'expressions'].map(k => characterSheet[k]).filter(Boolean)
+}
+
 function AvatarCard({ avatar, onEnlarge }) {
-  const csKeys = ['fullBodyGrid', 'expressions', 'base']
-  const csImages = csKeys.map(k => avatar.characterSheet?.[k]).filter(Boolean)
+  const [expanded, setExpanded] = useState(false)
+  const images = csImages(avatar.characterSheet)
 
   return (
-    <div style={{
-      background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0',
-      padding: 20, display: 'flex', flexDirection: 'column', gap: 16,
-    }}>
-      {/* Header row */}
-      <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+    <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+      {/* Collapsed row — always visible */}
+      <div
+        onClick={() => setExpanded(e => !e)}
+        style={{ padding: '14px 18px', display: 'flex', gap: 14, alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
+      >
         {/* Avatar thumbnail */}
         <div
-          onClick={() => avatar.avatarUrl && onEnlarge(avatar.avatarUrl)}
+          onClick={e => { if (avatar.avatarUrl) { e.stopPropagation(); onEnlarge(avatar.avatarUrl) } }}
           style={{
-            width: 56, height: 70, borderRadius: 8, overflow: 'hidden',
+            width: 44, height: 56, borderRadius: 6, overflow: 'hidden',
             background: '#F7F9FC', border: '1px solid #E2E8F0', flexShrink: 0,
             cursor: avatar.avatarUrl ? 'zoom-in' : 'default',
           }}
@@ -68,49 +78,75 @@ function AvatarCard({ avatar, onEnlarge }) {
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
-            <span style={{ fontSize: 15, fontWeight: 600, color: '#1A202C' }}>{avatar.name}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#1A202C' }}>{avatar.name}</span>
             <ApprovalBadge status={avatar.approvalStatus} />
           </div>
-          {/* Tags */}
+          <div style={{ fontSize: 12, color: '#718096' }}>
+            {[avatar.meta?.age, avatar.meta?.gender, avatar.meta?.ethnicity].filter(Boolean).join(' · ')}
+          </div>
           {(avatar.tags ?? []).length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
               {(avatar.tags ?? []).map(t => <Tag key={t} label={t} />)}
             </div>
           )}
-          {/* Meta badges */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+        </div>
+
+        {/* Chevron */}
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+          <path d="M4 6l4 4 4-4" stroke="#9AA5B4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+
+      {/* Expanded content */}
+      {expanded && (
+        <div style={{ borderTop: '1px solid #E2E8F0', padding: '16px 18px', background: '#FAFBFC' }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: '#9AA5B4', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+            Character sheet
+          </div>
+
+          {images.length > 0 ? (
+            <div style={{ display: 'flex', gap: 10 }}>
+              {images.map((url, i) => (
+                <div
+                  key={i}
+                  onClick={() => onEnlarge(url)}
+                  style={{
+                    flex: 1, aspectRatio: '3/4', borderRadius: 8, overflow: 'hidden',
+                    background: '#F7F9FC', border: '1px solid #E2E8F0', cursor: 'zoom-in',
+                  }}
+                >
+                  <img src={url} alt={`Sheet ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ fontSize: 13, color: '#9AA5B4', fontStyle: 'italic' }}>No character sheet yet.</div>
+          )}
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 14 }}>
             {avatar.meta?.age && <MetaBadge label="Age" value={avatar.meta.age} />}
             {avatar.meta?.gender && <MetaBadge label="Gender" value={avatar.meta.gender} />}
             {avatar.meta?.ethnicity && <MetaBadge label="Ethnicity" value={avatar.meta.ethnicity} />}
             {avatar.meta?.hair && <MetaBadge label="Hair" value={avatar.meta.hair} />}
-            {avatar.meta?.clothing && <MetaBadge label="Clothing" value={avatar.meta.clothing} />}
-          </div>
-        </div>
-      </div>
-
-      {/* Character sheet thumbnails */}
-      {csImages.length > 0 && (
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 600, color: '#9AA5B4', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Character sheet</div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {csImages.map((url, i) => (
-              <div
-                key={i}
-                onClick={() => onEnlarge(url)}
-                style={{
-                  flex: 1, aspectRatio: '1/1', borderRadius: 6, overflow: 'hidden',
-                  background: '#F7F9FC', border: '1px solid #E2E8F0', cursor: 'zoom-in',
-                }}
-              >
-                <img src={url} alt={`Sheet ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-            ))}
           </div>
         </div>
       )}
     </div>
   )
+}
+
+function matchesSearch(avatar, query) {
+  if (!query) return true
+  const q = query.toLowerCase()
+  return [
+    avatar.name,
+    avatar.meta?.age,
+    avatar.meta?.gender,
+    avatar.meta?.ethnicity,
+    avatar.meta?.hair,
+    ...(avatar.tags ?? []),
+  ].some(v => v?.toLowerCase().includes(q))
 }
 
 export default function PublicLibrary() {
@@ -134,7 +170,7 @@ export default function PublicLibrary() {
   const allGenders = [...new Set(avatars.map(a => a.meta?.gender).filter(Boolean))].sort()
 
   const filtered = avatars.filter(a => {
-    if (searchQuery && !a.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
+    if (!matchesSearch(a, searchQuery)) return false
     if (filterGender && a.meta?.gender !== filterGender) return false
     if (filterTags.length > 0 && !filterTags.every(t => (a.tags ?? []).includes(t))) return false
     if (filterStatus && (a.approvalStatus ?? 'pending') !== filterStatus) return false
@@ -160,62 +196,46 @@ export default function PublicLibrary() {
           <span style={{ fontSize: 13, color: '#9AA5B4', borderLeft: '1px solid #E2E8F0', paddingLeft: 12 }}>UGC Avatar Library</span>
         </div>
 
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '28px 20px' }}>
+        <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 20px' }}>
           {/* Filters */}
           <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', padding: '16px 20px', marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {/* Search */}
             <input
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search by name…"
+              placeholder="Search by name, age, ethnicity, hair, tag…"
               style={{ width: '100%', padding: '8px 12px', fontSize: 14, borderRadius: 6, border: '1px solid #E2E8F0', fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none' }}
             />
 
-            {/* Status filter */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: '#9AA5B4', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: 4 }}>Status</span>
               {['approved', 'pending', 'rejected'].map(s => {
-                const style = APPROVAL_STYLE[s]
+                const st = APPROVAL_STYLE[s]
                 const active = filterStatus === s
                 return (
-                  <button
-                    key={s}
-                    onClick={() => setFilterStatus(active ? '' : s)}
-                    style={{
-                      padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-                      background: active ? style.color : style.bg,
-                      color: active ? '#fff' : style.color,
-                      border: `1px solid ${style.color}`,
-                    }}
-                  >
-                    {style.label}
+                  <button key={s} onClick={() => setFilterStatus(active ? '' : s)} style={{
+                    padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    background: active ? st.color : st.bg, color: active ? '#fff' : st.color, border: `1px solid ${st.color}`,
+                  }}>
+                    {st.label}
                   </button>
                 )
               })}
             </div>
 
-            {/* Gender filter */}
             {allGenders.length > 0 && (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                 <span style={{ fontSize: 11, fontWeight: 600, color: '#9AA5B4', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: 4 }}>Gender</span>
                 {allGenders.map(g => (
-                  <button
-                    key={g}
-                    onClick={() => setFilterGender(filterGender === g ? '' : g)}
-                    style={{
-                      padding: '3px 10px', fontSize: 12, borderRadius: 99, cursor: 'pointer', fontFamily: 'inherit',
-                      background: filterGender === g ? '#13B5EA' : '#EEF6FD',
-                      color: filterGender === g ? '#fff' : '#0C7ABF',
-                      border: `1px solid ${filterGender === g ? '#13B5EA' : '#BDE3F7'}`,
-                    }}
-                  >
-                    {g}
-                  </button>
+                  <button key={g} onClick={() => setFilterGender(filterGender === g ? '' : g)} style={{
+                    padding: '3px 10px', fontSize: 12, borderRadius: 99, cursor: 'pointer', fontFamily: 'inherit',
+                    background: filterGender === g ? '#13B5EA' : '#EEF6FD',
+                    color: filterGender === g ? '#fff' : '#0C7ABF',
+                    border: `1px solid ${filterGender === g ? '#13B5EA' : '#BDE3F7'}`,
+                  }}>{g}</button>
                 ))}
               </div>
             )}
 
-            {/* Tag filter */}
             {allTags.length > 0 && (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                 <span style={{ fontSize: 11, fontWeight: 600, color: '#9AA5B4', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: 4 }}>Tags</span>
@@ -226,14 +246,12 @@ export default function PublicLibrary() {
             )}
           </div>
 
-          {/* Count */}
           <div style={{ fontSize: 12, color: '#9AA5B4', marginBottom: 16 }}>
             {loading ? 'Loading…' : `${filtered.length} avatar${filtered.length !== 1 ? 's' : ''}`}
           </div>
 
-          {/* Grid */}
           {!loading && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {filtered.map(avatar => (
                 <AvatarCard key={avatar.id} avatar={avatar} onEnlarge={setEnlarged} />
               ))}
@@ -246,12 +264,8 @@ export default function PublicLibrary() {
         </div>
       </div>
 
-      {/* Lightbox */}
       {enlarged && (
-        <div
-          onClick={() => setEnlarged(null)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, cursor: 'zoom-out' }}
-        >
+        <div onClick={() => setEnlarged(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, cursor: 'zoom-out' }}>
           <img src={enlarged} alt="Enlarged" style={{ maxHeight: '90vh', maxWidth: '90vw', borderRadius: 10, objectFit: 'contain', boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }} />
           <div style={{ position: 'absolute', top: 20, right: 24, width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 18, color: 'white' }}>✕</div>
         </div>
