@@ -284,6 +284,7 @@ function compressImage(file, maxDimension = 1500, quality = 0.85) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function Environment() {
   const [step, setStep] = useState(1)
+  const [substep, setSubstep] = useState('character') // 'character' | 'configure'
   const [fields, setFields] = useState(DEFAULT)
   const router = useRouter()
   const [promptOpen, setPromptOpen] = useState(false)
@@ -605,98 +606,105 @@ export default function Environment() {
 
         <Steps current={step} />
 
-        {/* ── Step 1: Configure ─────────────────────────────────────────── */}
-        {step === 1 && (
+        {/* ── Step 1a: Select character ──────────────────────────────────── */}
+        {step === 1 && substep === 'character' && (
+          <div>
+            <span style={S.sectionLabel}>Character</span>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              {['library', 'upload'].map(m => (
+                <button key={m} onClick={() => setCharPickerMode(m)} style={{
+                  padding: '7px 16px', fontSize: 13, borderRadius: 6, cursor: 'pointer',
+                  fontFamily: 'inherit', fontWeight: charPickerMode === m ? 500 : 400,
+                  background: charPickerMode === m ? '#1A2B4A' : '#fff',
+                  border: charPickerMode === m ? '1px solid #1A2B4A' : '1px solid #E2E8F0',
+                  color: charPickerMode === m ? '#fff' : '#4A5568',
+                }}>
+                  {m === 'library' ? '📚 Choose from library' : '↑ Upload manually'}
+                </button>
+              ))}
+            </div>
+
+            {charPickerMode === 'library' && (
+              <div>
+                {libraryLoading && <p style={{ fontSize: 13, color: '#4A5568' }}>Loading...</p>}
+                {!libraryLoading && library.length === 0 && (
+                  <Notice warning>No avatars in library yet. <Link href="/create-avatar" style={{ color: '#13B5EA' }}>Create one first →</Link></Notice>
+                )}
+                {!libraryLoading && library.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
+                    {library.map(avatar => (
+                      <div
+                        key={avatar.id}
+                        onClick={() => setSelectedAvatarId(avatar.id)}
+                        style={{
+                          display: 'flex', gap: 12, alignItems: 'center', padding: '10px 14px',
+                          borderRadius: 8, cursor: 'pointer',
+                          border: selectedAvatarId === avatar.id ? '2px solid #13B5EA' : '1px solid #E2E8F0',
+                          background: selectedAvatarId === avatar.id ? '#E8F6FD' : '#fff',
+                          transition: 'all 0.1s',
+                        }}
+                      >
+                        <div style={{ width: 40, height: 50, borderRadius: 5, overflow: 'hidden', border: '1px solid #E2E8F0', flexShrink: 0, background: '#F7F9FC' }}>
+                          {avatar.avatarUrl && <img src={avatar.avatarUrl} alt={avatar.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500 }}>{avatar.name}</div>
+                          <div style={{ fontSize: 11, color: '#4A5568' }}>{avatar.meta?.age} · {avatar.meta?.gender} · {avatar.meta?.ethnicity}</div>
+                          {!avatar.characterSheet && (
+                            <div style={{ fontSize: 11, color: '#E67E22', marginTop: 2 }}>⚠ No character sheet — <Link href={`/character-sheet?avatarId=${avatar.id}`} style={{ color: '#13B5EA' }}>generate one first</Link></div>
+                          )}
+                          {isV1Sheet && avatar.id === selectedAvatarId && (
+                            <div style={{ fontSize: 11, color: '#E67E22', marginTop: 2 }}>⚠ Old character sheet — <Link href={`/character-sheet?avatarId=${avatar.id}`} style={{ color: '#13B5EA' }}>regenerate to use here</Link></div>
+                          )}
+                          {avatar.characterSheet?.fullBodyGrid && avatar.characterSheet?.expressions && (
+                            <div style={{ fontSize: 11, color: '#27AE60', marginTop: 2 }}>✓ Character sheet ready</div>
+                          )}
+                        </div>
+                        {selectedAvatarId === avatar.id && (
+                          <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#13B5EA', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {selectedAvatarId && isV1Sheet && (
+                  <Notice warning>This avatar has an old character sheet that's no longer compatible. <Link href={`/character-sheet?avatarId=${selectedAvatarId}`} style={{ color: '#13B5EA' }}>Regenerate it →</Link></Notice>
+                )}
+                {selectedAvatarId && !cs && (
+                  <Notice warning>This avatar doesn't have a character sheet yet. <Link href={`/character-sheet?avatarId=${selectedAvatarId}`} style={{ color: '#13B5EA' }}>Generate one →</Link></Notice>
+                )}
+              </div>
+            )}
+
+            {charPickerMode === 'upload' && (
+              <div>
+                <Notice warning>Upload the three reference images for your character manually.</Notice>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <ImageUploadSlot label="Full body — front" sublabel="Standing, facing camera" preview={refPreviews[0]} onFile={f => handleRefImage(0, f)} onRemove={() => removeRefImage(0)} />
+                  <ImageUploadSlot label="Full body — side" sublabel="Standing, side-on" preview={refPreviews[1]} onFile={f => handleRefImage(1, f)} onRemove={() => removeRefImage(1)} />
+                  <ImageUploadSlot label="Expressions grid" sublabel="Multiple angles / expressions" preview={refPreviews[2]} onFile={f => handleRefImage(2, f)} onRemove={() => removeRefImage(2)} />
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
+              {charPickerMode === 'library'
+                ? <Btn primary disabled={!selectedAvatarId || !cs || isV1Sheet} onClick={() => setSubstep('configure')}>Next →</Btn>
+                : <Btn primary disabled={!refImagesReady} onClick={() => setSubstep('configure')}>Next →</Btn>
+              }
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 1b: Configure environment ────────────────────────────── */}
+        {step === 1 && substep === 'configure' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div style={{ fontSize: 13, color: '#4A5568' }}>WFH Office</div>
               <Btn onClick={doRandomise} style={{ fontSize: 13 }}>⚄ Randomise</Btn>
             </div>
-
-            {/* Character selection */}
-            {true && (
-              <div>
-                <span style={S.sectionLabel}>Character</span>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-                  {['library', 'upload'].map(m => (
-                    <button key={m} onClick={() => setCharPickerMode(m)} style={{
-                      padding: '7px 16px', fontSize: 13, borderRadius: 6, cursor: 'pointer',
-                      fontFamily: 'inherit', fontWeight: charPickerMode === m ? 500 : 400,
-                      background: charPickerMode === m ? '#1A2B4A' : '#fff',
-                      border: charPickerMode === m ? '1px solid #1A2B4A' : '1px solid #E2E8F0',
-                      color: charPickerMode === m ? '#fff' : '#4A5568',
-                    }}>
-                      {m === 'library' ? '📚 Choose from library' : '↑ Upload manually'}
-                    </button>
-                  ))}
-                </div>
-
-                {charPickerMode === 'library' && (
-                  <div>
-                    {libraryLoading && <p style={{ fontSize: 13, color: '#4A5568' }}>Loading...</p>}
-                    {!libraryLoading && library.length === 0 && (
-                      <Notice warning>No avatars in library yet. <Link href="/create-avatar" style={{ color: '#13B5EA' }}>Create one first →</Link></Notice>
-                    )}
-                    {!libraryLoading && library.length > 0 && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
-                        {library.map(avatar => (
-                          <div
-                            key={avatar.id}
-                            onClick={() => setSelectedAvatarId(avatar.id)}
-                            style={{
-                              display: 'flex', gap: 12, alignItems: 'center', padding: '10px 14px',
-                              borderRadius: 8, cursor: 'pointer',
-                              border: selectedAvatarId === avatar.id ? '2px solid #13B5EA' : '1px solid #E2E8F0',
-                              background: selectedAvatarId === avatar.id ? '#E8F6FD' : '#fff',
-                              transition: 'all 0.1s',
-                            }}
-                          >
-                            <div style={{ width: 40, height: 50, borderRadius: 5, overflow: 'hidden', border: '1px solid #E2E8F0', flexShrink: 0, background: '#F7F9FC' }}>
-                              {avatar.avatarUrl && <img src={avatar.avatarUrl} alt={avatar.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                            </div>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: 13, fontWeight: 500 }}>{avatar.name}</div>
-                              <div style={{ fontSize: 11, color: '#4A5568' }}>{avatar.meta?.age} · {avatar.meta?.gender} · {avatar.meta?.ethnicity}</div>
-                              {!avatar.characterSheet && (
-                                <div style={{ fontSize: 11, color: '#E67E22', marginTop: 2 }}>⚠ No character sheet — <Link href={`/character-sheet?avatarId=${avatar.id}`} style={{ color: '#13B5EA' }}>generate one first</Link></div>
-                              )}
-                              {isV1Sheet && avatar.id === selectedAvatarId && (
-                                <div style={{ fontSize: 11, color: '#E67E22', marginTop: 2 }}>⚠ Old character sheet — <Link href={`/character-sheet?avatarId=${avatar.id}`} style={{ color: '#13B5EA' }}>regenerate to use here</Link></div>
-                              )}
-                              {avatar.characterSheet?.fullBodyGrid && avatar.characterSheet?.expressions && (
-                                <div style={{ fontSize: 11, color: '#27AE60', marginTop: 2 }}>✓ Character sheet ready</div>
-                              )}
-                            </div>
-                            {selectedAvatarId === avatar.id && (
-                              <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#13B5EA', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {selectedAvatarId && isV1Sheet && (
-                      <Notice warning>This avatar has an old character sheet that's no longer compatible. <Link href={`/character-sheet?avatarId=${selectedAvatarId}`} style={{ color: '#13B5EA' }}>Regenerate it →</Link></Notice>
-                    )}
-                    {selectedAvatarId && !cs && (
-                      <Notice warning>This avatar doesn't have a character sheet yet. <Link href={`/character-sheet?avatarId=${selectedAvatarId}`} style={{ color: '#13B5EA' }}>Generate one →</Link></Notice>
-                    )}
-                  </div>
-                )}
-
-                {charPickerMode === 'upload' && (
-                  <div>
-                    <Notice warning>Upload the three reference images for your character manually.</Notice>
-                    <div style={{ display: 'flex', gap: 12 }}>
-                      <ImageUploadSlot label="Full body — front" sublabel="Standing, facing camera" preview={refPreviews[0]} onFile={f => handleRefImage(0, f)} onRemove={() => removeRefImage(0)} />
-                      <ImageUploadSlot label="Full body — side" sublabel="Standing, side-on" preview={refPreviews[1]} onFile={f => handleRefImage(1, f)} onRemove={() => removeRefImage(1)} />
-                      <ImageUploadSlot label="Expressions grid" sublabel="Multiple angles / expressions" preview={refPreviews[2]} onFile={f => handleRefImage(2, f)} onRemove={() => removeRefImage(2)} />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
 
             <span style={S.sectionLabel}>House type</span>
             <ToggleGroup options={HOUSING_TYPES} selected={fields.housingType} onToggle={v => setSingle('housingType', v)} />
@@ -738,11 +746,9 @@ export default function Environment() {
               <pre style={{ background: '#F7F9FC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '14px 16px', fontSize: 12, lineHeight: 1.7, color: '#4A5568', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 280, overflowY: 'auto', margin: '8px 0 0' }}>{prompt}</pre>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
-              {withCharacter && !refImagesReady
-                ? <Btn primary disabled>Upload all 3 reference images first</Btn>
-                : <Btn primary onClick={() => { setStep(2); setGenStatus('idle') }}>Generate →</Btn>
-              }
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 20 }}>
+              <Btn onClick={() => setSubstep('character')}>← Back</Btn>
+              <Btn primary onClick={() => { setStep(2); setGenStatus('idle') }}>Generate →</Btn>
             </div>
           </div>
         )}
@@ -828,7 +834,7 @@ export default function Environment() {
             )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Btn onClick={() => setStep(1)}>← Edit configuration</Btn>
+              <Btn onClick={() => { setStep(1); setSubstep('configure') }}>← Edit configuration</Btn>
               {genStatus === 'idle' || genStatus === 'error'
                 ? <Btn primary onClick={startGeneration}>Start generation</Btn>
                 : genStatus === 'done'
@@ -932,7 +938,7 @@ export default function Environment() {
               </div>
             ))}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
-              <Btn primary onClick={() => { setStep(1); setGenStatus('idle'); setOutputs([]); setSelectedOutput(null) }}>Generate another</Btn>
+              <Btn primary onClick={() => { setStep(1); setSubstep('character'); setGenStatus('idle'); setOutputs([]); setSelectedOutput(null) }}>Generate another</Btn>
             </div>
           </div>
         )}
