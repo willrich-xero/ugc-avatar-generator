@@ -195,7 +195,7 @@ export default function PublicLibrary() {
       <div style={{ minHeight: '100vh', background: '#F7F9FC', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
         {/* Header */}
         <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Xero_software_logo.svg/2560px-Xero_software_logo.svg.png" alt="Xero" style={{ height: 28 }} />
+          <img src="/xero-logo.png" alt="Xero" style={{ height: 28 }} />
           <span style={{ fontSize: 13, color: '#9AA5B4', borderLeft: '1px solid #E2E8F0', paddingLeft: 12 }}>UGC Avatar Library</span>
         </div>
 
